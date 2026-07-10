@@ -1,0 +1,24 @@
+{
+    "sentiment_analysis": {
+        "review_sample_size": 100000,
+        "sentiment_rating_correlation": 0.016577317996474186,
+        "interpretation": "Positive correlation indicates reviews with cleaner, better hosts command higher rating scores."
+    },
+    "price_prediction_models": {
+        "Ridge Regression": {
+            "MAE": 135.06586021640666,
+            "RMSE": 1480.9775714605553,
+            "MAPE": 0.4916942374926525
+        },
+        "Random Forest": {
+            "MAE": 104.31623116331086,
+            "RMSE": 388.3268576785386,
+            "MAPE": 0.42716789760431906
+        },
+        "Gradient Boosting": {
+            "MAE": 105.9097680261641,
+            "RMSE": 395.78869174732165,
+            "MAPE": 0.4303346655974242
+        }
+    }
+}
