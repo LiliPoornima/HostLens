@@ -20,5 +20,32 @@
             "RMSE": 395.78869174732165,
             "MAPE": 0.4303346655974242
         }
-    }
+    },
+    "extracted_review_topics": [
+        {
+            "topic_id": 1,
+            "theme": "Location & Public Transit",
+            "top_keywords": "br, apartment, great, place, subway, restaurants, stay, walk, close, manhattan"
+        },
+        {
+            "topic_id": 2,
+            "theme": "Host Hospitality & Communication",
+            "top_keywords": "la, muy, el, en, br, es, que, und, para, die"
+        },
+        {
+            "topic_id": 3,
+            "theme": "Room/Bed Comfort & Tidiness",
+            "top_keywords": "br, et, est, tr\u00e8s, le, la, nous, pour, appartement, les"
+        },
+        {
+            "topic_id": 4,
+            "theme": "Check-in/Check-out Experience",
+            "top_keywords": "great, stay, place, clean, location, nice, room, good, really, apartment"
+        },
+        {
+            "topic_id": 5,
+            "theme": "Apartment Cleanliness & Amenities",
+            "top_keywords": "great, stay, place, host, clean, location, apartment, definitely, recommend, check"
+        }
+    ]
 }

@@ -7,6 +7,9 @@ from sklearn.linear_model import Ridge
 from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, root_mean_squared_error, mean_absolute_percentage_error
 from sklearn.preprocessing import StandardScaler
+from sklearn.inspection import permutation_importance
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.decomposition import LatentDirichletAllocation
 
 # Lexicon of positive and negative words for fast sentiment analysis
 POSITIVE_WORDS = {
@@ -147,12 +150,87 @@ def run_ml_and_sentiment():
     rf_final = RandomForestRegressor(n_estimators=50, max_depth=12, random_state=42, n_jobs=-1)
     rf_final.fit(X_scaled, y_log)
     
+    # Feature Importance (Standard Gini Importance)
     feat_importances = pd.DataFrame({
         "feature": X.columns,
         "importance": rf_final.feature_importances_
     }).sort_values(by="importance", ascending=False)
-    
     feat_importances.to_csv("reports/feature_importances.csv", index=False)
+
+    # Feature Importance (Permutation Importance for robustness)
+    print("Computing permutation feature importance...")
+    perm_importance = permutation_importance(rf_final, X_scaled, y_log, n_repeats=3, random_state=42, n_jobs=-1)
+    feat_perm = pd.DataFrame({
+        "feature": X.columns,
+        "importance": perm_importance.importances_mean,
+        "importance_std": perm_importance.importances_std
+    }).sort_values(by="importance", ascending=False)
+    feat_perm.to_csv("reports/permutation_importance.csv", index=False)
+    print("Saved permutation feature importance to reports/permutation_importance.csv")
+
+    # Model Bias Analysis (MAE and MAPE split by borough and room type)
+    print("Computing model bias metrics...")
+    preds_log_final = rf_final.predict(X_scaled)
+    preds_orig_final = np.expm1(preds_log_final)
+    preds_orig_final = np.clip(preds_orig_final, 0, None)
+
+    eval_df = ml_df.copy()
+    eval_df["predicted_price"] = preds_orig_final
+    eval_df["absolute_error"] = np.abs(eval_df["price"] - eval_df["predicted_price"])
+    eval_df["percentage_error"] = eval_df["absolute_error"] / eval_df["price"].replace(0, 1)
+    eval_df["borough"] = df.loc[ml_df.index, "neighbourhood_group_cleansed"]
+    eval_df["room_type"] = df.loc[ml_df.index, "room_type"]
+
+    borough_bias = eval_df.groupby("borough").agg(
+        mae=("absolute_error", "mean"),
+        mape=("percentage_error", "mean"),
+        count=("price", "count")
+    ).reset_index()
+    borough_bias["mape"] = borough_bias["mape"] * 100
+    borough_bias.to_csv("reports/model_bias_borough.csv", index=False)
+
+    room_type_bias = eval_df.groupby("room_type").agg(
+        mae=("absolute_error", "mean"),
+        mape=("percentage_error", "mean"),
+        count=("price", "count")
+    ).reset_index()
+    room_type_bias["mape"] = room_type_bias["mape"] * 100
+    room_type_bias.to_csv("reports/model_bias_room_type.csv", index=False)
+    print("Saved model bias breakdowns by geography and operations.")
+
+    # NLP Topic Modeling via LDA
+    print("Running review topic modeling via LDA...")
+    lda_sample_size = min(20000, len(reviews_sample))
+    lda_comments = reviews_sample["comments"].dropna().astype(str).sample(n=lda_sample_size, random_state=42).tolist()
+    
+    vectorizer = CountVectorizer(stop_words='english', max_features=500, min_df=2)
+    tf_matrix = vectorizer.fit_transform(lda_comments)
+    
+    lda = LatentDirichletAllocation(n_components=5, max_iter=5, random_state=42, n_jobs=-1)
+    lda.fit(tf_matrix)
+    
+    feature_names = vectorizer.get_feature_names_out()
+    topics_data = []
+    # Assign names to topics for better presentation
+    topic_labels = {
+        1: "Location & Public Transit",
+        2: "Host Hospitality & Communication",
+        3: "Room/Bed Comfort & Tidiness",
+        4: "Check-in/Check-out Experience",
+        5: "Apartment Cleanliness & Amenities"
+    }
+    for topic_idx, topic in enumerate(lda.components_):
+        top_word_indices = topic.argsort()[:-11:-1]
+        top_words = [feature_names[i] for i in top_word_indices]
+        tid = topic_idx + 1
+        topics_data.append({
+            "topic_id": tid,
+            "theme": topic_labels.get(tid, f"Topic {tid}"),
+            "top_keywords": ", ".join(top_words)
+        })
+    df_topics = pd.DataFrame(topics_data)
+    df_topics.to_csv("reports/nlp_review_topics.csv", index=False)
+    print("Saved review topics to reports/nlp_review_topics.csv")
 
     # Save summary report of ML and sentiment findings
     summary = {
@@ -161,7 +239,8 @@ def run_ml_and_sentiment():
             "sentiment_rating_correlation": sentiment_rating_corr,
             "interpretation": "Positive correlation indicates reviews with cleaner, better hosts command higher rating scores."
         },
-        "price_prediction_models": model_results
+        "price_prediction_models": model_results,
+        "extracted_review_topics": topics_data
     }
     
     with open("reports/ml_findings.json", "w") as f:

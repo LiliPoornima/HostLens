@@ -80,7 +80,15 @@ st.markdown("<h1 class='main-title'>🏠 HostLens: Airbnb Market Intelligence</h
 st.markdown("An end-to-end data engineering and analytics dashboard for the New York City Airbnb marketplace.")
 
 # Tabs
-tab1, tab2, tab3, tab4 = st.tabs(["📈 Market Overview", "🗺️ Map Explorer", "👥 Host & Review Insights", "💻 SQL Console"])
+tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+    "📈 Market Overview", 
+    "🗺️ Map Explorer", 
+    "👥 Host & Review Insights", 
+    "🤖 Advanced ML & Explainability",
+    "🔮 Occupancy Forecast",
+    "📋 Pipeline Logs & Telemetry",
+    "💻 SQL Console"
+])
 
 # Tab 1: Market Overview
 with tab1:
@@ -190,8 +198,120 @@ with tab3:
             ax.set_ylabel("Review Rating Score")
             st.pyplot(fig)
 
-# Tab 4: SQL Console
+# Tab 4: Advanced ML & Explainability
 with tab4:
+    st.subheader("🤖 Pricing Model Explainability & Operational Bias Analysis")
+    st.markdown("This tab displays advanced machine learning results including robust permutation importance and model performance bias checks.")
+    
+    col_ml1, col_ml2 = st.columns(2)
+    
+    with col_ml1:
+        st.subheader("Permutation Feature Importance")
+        st.markdown("Unlike raw Gini importances, Permutation Importance measures how much the validation score drops when a feature is shuffled.")
+        try:
+            df_perm = pd.read_csv("reports/permutation_importance.csv")
+            fig, ax = plt.subplots(figsize=(8, 5))
+            sns.barplot(data=df_perm.head(10), x="importance", y="feature", palette="viridis", ax=ax)
+            ax.set_xlabel("Mean Importances Decrease")
+            ax.set_ylabel("Feature")
+            st.pyplot(fig)
+        except Exception:
+            st.warning("⚠️ Permutation importance CSV not found. Run `python src/machine_learning.py` to compile.")
+
+    with col_ml2:
+        st.subheader("Review Topics Extracted via LDA")
+        st.markdown("We run Latent Dirichlet Allocation (LDA) on reviews comments to classify feedback categories automatically.")
+        try:
+            df_topics = pd.read_csv("reports/nlp_review_topics.csv")
+            st.table(df_topics)
+        except Exception:
+            st.warning("⚠️ Review topics CSV not found. Run `python src/machine_learning.py` to compile.")
+
+    st.markdown("---")
+    st.subheader("🔍 Model Generalizability & Geographic Bias Analysis")
+    st.markdown("Evaluating pricing errors (MAE and MAPE) across boroughs and operational room types to identify model biases.")
+    
+    col_bias1, col_bias2 = st.columns(2)
+    with col_bias1:
+        st.write("#### Performance by Borough")
+        try:
+            df_bias_b = pd.read_csv("reports/model_bias_borough.csv")
+            st.dataframe(df_bias_b)
+            fig, ax = plt.subplots(figsize=(8, 4))
+            sns.barplot(data=df_bias_b, x="borough", y="mape", palette="coolwarm", ax=ax)
+            ax.set_ylabel("Mean Absolute Percentage Error (%)")
+            ax.set_xlabel("Borough")
+            st.pyplot(fig)
+        except Exception:
+            st.warning("⚠️ Borough bias metrics not found.")
+            
+    with col_bias2:
+        st.write("#### Performance by Room Type")
+        try:
+            df_bias_r = pd.read_csv("reports/model_bias_room_type.csv")
+            st.dataframe(df_bias_r)
+            fig, ax = plt.subplots(figsize=(8, 4))
+            sns.barplot(data=df_bias_r, x="room_type", y="mape", palette="coolwarm", ax=ax)
+            ax.set_ylabel("Mean Absolute Percentage Error (%)")
+            ax.set_xlabel("Room Type")
+            plt.xticks(rotation=15)
+            st.pyplot(fig)
+        except Exception:
+            st.warning("⚠️ Room type bias metrics not found.")
+
+# Tab 5: Occupancy Forecast
+with tab5:
+    st.subheader("🔮 NYC Occupancy Rate Forecasting (Next 6 Months)")
+    st.markdown("Utilizing historical daily calendar booking data aggregated monthly to predict future NYC occupancy rates using Holt's Linear Exponential Smoothing.")
+    
+    try:
+        col_f1, col_f2 = st.columns([2, 1])
+        with col_f1:
+            st.image("reports/figures/07_occupancy_forecast.png", use_container_width=True)
+        with col_f2:
+            st.markdown("#### Forecast Summary")
+            df_f = pd.read_csv("reports/occupancy_forecast.csv")
+            df_f["forecast_occupancy"] = (df_f["forecast_occupancy"] * 100).round(2).astype(str) + "%"
+            st.table(df_f)
+    except Exception as e:
+        st.warning(f"⚠️ Forecast artifacts not found. Run `python src/forecasting.py` to compile. Details: {e}")
+
+# Tab 6: Pipeline Logs & Telemetry
+with tab6:
+    st.subheader("📋 Pipeline Logs & Telemetry")
+    st.markdown("Real-time telemetry and validation summaries from the automated data pipeline.")
+    
+    try:
+        with open("reports/pipeline_metadata.json", "r") as f:
+            metadata = json = pd.read_json("reports/pipeline_metadata.json", typ="series")
+        
+        st.write("#### Pipeline Telemetry Summary")
+        col_meta1, col_meta2, col_meta3, col_meta4 = st.columns(4)
+        col_meta1.metric("Run ID", metadata["run_id"])
+        col_meta2.metric("Run Timestamp", metadata["run_timestamp"])
+        col_meta3.metric("Cleaned Listings Count", f"{metadata['listings_cleaned_count']:,}")
+        col_meta4.metric("ETL Status", metadata["status"])
+        
+        st.markdown("---")
+        st.write("#### Raw Ingested Row Counts")
+        col_raw1, col_raw2, col_raw3 = st.columns(3)
+        col_raw1.metric("Raw Listings Rows", f"{metadata['listings_raw_count']:,}")
+        col_raw2.metric("Raw Calendar Rows", f"{metadata['calendar_raw_count']:,}")
+        col_raw3.metric("Raw Reviews Rows", f"{metadata['reviews_raw_count']:,}")
+        
+    except Exception:
+        st.warning("⚠️ Pipeline metadata JSON not found. Run `python src/pipeline.py` first.")
+        
+    st.markdown("---")
+    st.write("#### Ingestion Profiling Summary")
+    try:
+        df_profiling = pd.read_csv("reports/data_profiling_summary.csv")
+        st.dataframe(df_profiling)
+    except Exception:
+        st.warning("⚠️ Data profiling CSV not found.")
+
+# Tab 7: SQL Console
+with tab7:
     st.subheader("Execute SQL Queries against DuckDB")
     st.markdown("""
     Explore the database schema:
@@ -200,6 +320,7 @@ with tab4:
     - `dim_property` (listing_id, property_type, room_type, bedrooms, beds)
     - `dim_reviews` (listing_id, first_review, last_review)
     - `fact_listings` (listing_id, host_id, neighbourhood_cleansed, price, number_of_reviews, review_scores_rating, reviews_per_month, total_reviews)
+    - `metadata_log` (run_id, run_timestamp, listings_raw_count, calendar_raw_count, reviews_raw_count, listings_cleaned_count, duplicate_listings_count, fuzzy_matches_count, status)
     """)
     
     # Query text area

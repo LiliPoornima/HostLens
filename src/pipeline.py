@@ -1,6 +1,8 @@
 import os
 import sys
 import logging
+import json
+from datetime import datetime
 import pandas as pd
 import numpy as np
 import duckdb
@@ -258,6 +260,32 @@ def run_pipeline():
     row_count = conn.execute("SELECT COUNT(*) FROM fact_listings").fetchone()[0]
     logger.info(f"Verification: fact_listings has {row_count} rows loaded.")
     
+    # Ingest pipeline run metadata
+    run_timestamp = datetime.now()
+    run_id = f"run_{run_timestamp.strftime('%Y%m%d_%H%M%S')}"
+    metadata = {
+        "run_id": run_id,
+        "run_timestamp": run_timestamp.strftime('%Y-%m-%d %H:%M:%S'),
+        "listings_raw_count": int(listings_raw.shape[0]),
+        "calendar_raw_count": int(calendar_raw.shape[0]),
+        "reviews_raw_count": int(reviews_raw.shape[0]),
+        "listings_cleaned_count": int(listings.shape[0]),
+        "duplicate_listings_count": int(dup_listings_exact),
+        "fuzzy_matches_count": int(len(fuzzy_matches)),
+        "status": "SUCCESS"
+    }
+    
+    # Save as JSON file
+    with open("reports/pipeline_metadata.json", "w") as f:
+        json.dump(metadata, f, indent=4)
+    logger.info("Saved pipeline run metrics to reports/pipeline_metadata.json")
+    
+    # Load metadata df and write to metadata_log
+    df_meta_pd = pd.DataFrame([metadata])
+    df_meta_pd["run_timestamp"] = pd.to_datetime(df_meta_pd["run_timestamp"])
+    conn.execute("INSERT INTO metadata_log SELECT * FROM df_meta_pd")
+    logger.info("Successfully inserted execution telemetry into DuckDB metadata_log.")
+
     conn.close()
     logger.info("ETL pipeline execution complete! Success.")
 

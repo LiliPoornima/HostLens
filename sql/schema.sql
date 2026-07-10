@@ -43,3 +43,15 @@ CREATE TABLE fact_listings (
     FOREIGN KEY (neighbourhood_cleansed)
         REFERENCES dim_neighbourhoods(neighbourhood_cleansed)
 );
+
+CREATE TABLE metadata_log (
+    run_id VARCHAR(50) PRIMARY KEY,
+    run_timestamp TIMESTAMP,
+    listings_raw_count INT,
+    calendar_raw_count INT,
+    reviews_raw_count INT,
+    listings_cleaned_count INT,
+    duplicate_listings_count INT,
+    fuzzy_matches_count INT,
+    status VARCHAR(50)
+);
