@@ -54,6 +54,9 @@ def run_ml_and_sentiment():
     # Group sentiment by listing
     listing_sentiment = reviews_sample.groupby("listing_id")["sentiment_score"].mean().reset_index(name="avg_review_sentiment")
     
+    # Drop pre-existing sentiment column to avoid merge _x/_y conflicts
+    df = df.drop(columns=["avg_review_sentiment"], errors="ignore")
+    
     # Merge back to listings
     df = df.merge(listing_sentiment, left_on="id", right_on="listing_id", how="left").drop(columns=["listing_id"], errors="ignore")
     # Impute missing sentiment with 0 (neutral)
