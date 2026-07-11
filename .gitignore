@@ -4,6 +4,10 @@ __pycache__/
 .ipynb_checkpoints/
 
 data/raw/
-data/processed/
+
+# Ignore intermediate data files that are too large for Git
+data/processed/*cleaned*
+data/processed/enriched_listings.csv
+data/processed/hostlens.db
 
 *.pyc
