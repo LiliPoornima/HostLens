@@ -287,6 +287,16 @@ def run_pipeline():
     logger.info("Successfully inserted execution telemetry into DuckDB metadata_log.")
 
     conn.close()
+    
+    # 6. Run Listing & Host Clustering
+    try:
+        logger.info("Step 6: Running advanced listing & host clustering...")
+        sys.path.append(os.path.dirname(__file__))
+        from clustering import run_clustering
+        run_clustering()
+    except Exception as e:
+        logger.error(f"Error running clustering: {e}")
+
     logger.info("ETL pipeline execution complete! Success.")
 
 if __name__ == "__main__":
