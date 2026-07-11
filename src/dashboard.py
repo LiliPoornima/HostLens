@@ -149,7 +149,7 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     st.markdown("")
-    if st.button("🔄 Refresh Data", use_container_width=True):
+    if st.button("🔄 Refresh Data", width="stretch"):
         st.cache_data.clear()
         st.rerun()
 
@@ -180,14 +180,15 @@ st.markdown(f"""
 # ─────────────────────────────────────────────
 # TABS
 # ─────────────────────────────────────────────
-tab1, tab2, tab3, tab4, tab5, tab6, tab7 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "📊 Market Overview",
     "🗺️ Map Explorer",
     "👥 Host & Reviews",
     "🤖 ML & Explainability",
     "🔮 Occupancy Forecast",
     "⚙️ Pipeline Telemetry",
-    "💻 SQL Console"
+    "💻 SQL Console",
+    "🤖 AI Intelligence Hub"
 ])
 
 PLOTLY_THEME = dict(
@@ -506,7 +507,7 @@ with tab4:
             fig_bb.update_layout(**PLOTLY_THEME, coloraxis_showscale=False,
                                   title="MAPE by Borough", title_font=dict(color="#e6edf3", size=14))
             st.plotly_chart(fig_bb, width="stretch")
-            st.dataframe(df_bias_b.style.background_gradient(subset=["mape"], cmap="Reds"), use_container_width=True)
+            st.dataframe(df_bias_b.style.background_gradient(subset=["mape"], cmap="Reds"), width="stretch")
 
     with bc2:
         df_bias_r = load_report("reports/model_bias_room_type.csv")
@@ -521,7 +522,7 @@ with tab4:
             fig_br.update_layout(**PLOTLY_THEME, coloraxis_showscale=False,
                                   title="MAPE by Room Type", title_font=dict(color="#e6edf3", size=14))
             st.plotly_chart(fig_br, width="stretch")
-            st.dataframe(df_bias_r.style.background_gradient(subset=["mape"], cmap="Reds"), use_container_width=True)
+            st.dataframe(df_bias_r.style.background_gradient(subset=["mape"], cmap="Reds"), width="stretch")
 
 # ════════════════════════════════════════════
 # TAB 5 — OCCUPANCY FORECAST
@@ -584,7 +585,7 @@ with tab5:
             display["Forecasted Occupancy (%)"] = display["Forecasted Occupancy (%)"].round(2)
             st.dataframe(
                 display.style.background_gradient(subset=["Forecasted Occupancy (%)"], cmap="RdYlGn"),
-                use_container_width=True
+                width="stretch"
             )
         with fc2:
             peak   = display.loc[display["Forecasted Occupancy (%)"].idxmax()]
@@ -690,7 +691,7 @@ with tab6:
         num_cols = df_profiling.select_dtypes("number").columns.tolist()
         st.dataframe(
             df_profiling.style.background_gradient(subset=num_cols, cmap="Blues"),
-            use_container_width=True
+            width="stretch"
         )
     else:
         st.info("No profiling data available.")
@@ -750,9 +751,9 @@ with tab7:
                                    label_visibility="collapsed", placeholder="Write your SQL query here…")
         col_btn1, col_btn2, _ = st.columns([1, 1, 3])
         with col_btn1:
-            run_clicked = st.button("▶ Run Query", use_container_width=True)
+            run_clicked = st.button("▶ Run Query", width="stretch")
         with col_btn2:
-            if st.button("🗑 Clear", use_container_width=True):
+            if st.button("🗑 Clear", width="stretch"):
                 st.rerun()
 
         if run_clicked:
@@ -763,9 +764,122 @@ with tab7:
                 st.success(f"✅ Query returned **{len(result_df):,} rows** · {len(result_df.columns)} columns")
                 st.dataframe(
                     result_df.style.highlight_max(axis=0, color="rgba(255,90,95,0.15)"),
-                    use_container_width=True
+                    width="stretch"
                 )
                 csv_data = result_df.to_csv(index=False).encode()
                 st.download_button("⬇ Export CSV", csv_data, "query_result.csv", "text/csv")
             except Exception as e:
                 st.error(f"**SQL Error:** {e}")
+
+# ════════════════════════════════════════════
+# TAB 8 — AI INTELLIGENCE HUB
+# ════════════════════════════════════════════
+@st.cache_resource
+def get_rag_engine():
+    from ai_agent import RAGEngine
+    return RAGEngine()
+
+@st.cache_resource
+def get_recommender():
+    from ai_agent import RecommendationEngine
+    return RecommendationEngine()
+
+@st.cache_resource
+def get_pricing_agent():
+    from ai_agent import PricingAgent
+    return PricingAgent()
+
+with tab8:
+    st.markdown("""
+    <div class="glass-card">
+        <div style="display:flex;align-items:center;gap:12px">
+            <div style="font-size:28px">🤖</div>
+            <div>
+                <div style="font-size:16px;font-weight:700;color:#e6edf3">HostLens AI Intelligence Hub</div>
+                <div style="font-size:13px;color:#8b949e">Retrieval-Augmented Generation (RAG) Q&A Console, Content-Based recommendations, and ML-Powered Dynamic Pricing Agent</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Sub-tabs
+    ai_sub1, ai_sub2, ai_sub3 = st.tabs([
+        "🔍 Reviews Q&A Console (RAG)",
+        "🏠 Listing Recommender",
+        "💡 Dynamic Pricing Advisor"
+    ])
+    
+    with ai_sub1:
+        st.markdown('<div class="section-header"><h3>Semantic Search & Q&A over Guest Reviews</h3><span class="section-pill">RAG Engine</span></div>', unsafe_allow_html=True)
+        st.markdown("Query the guest reviews database semantically. The RAG engine retrieves matching reviews using TF-IDF and synthesizes reviewer feedback.")
+        user_query = st.text_input("Ask a question about listings or reviews:", value="Is the subway close or noisy?")
+        if st.button("Query Reviews", width="stretch"):
+            with st.spinner("Retrieving and synthesizing review comments..."):
+                rag_engine = get_rag_engine()
+                res = rag_engine.query(user_query)
+                st.markdown(res["answer"])
+                
+                if res["sources"]:
+                    st.write("")
+                    st.markdown("#### Retrieved Source Comments:")
+                    for idx, src in enumerate(res["sources"], 1):
+                        st.markdown(f"""
+                        <div class="glass-card" style="padding:14px; margin-bottom:10px;">
+                            <div style="font-size:11px; color:#FF5A5F; font-weight:600;">Source {idx} · Score: {src['similarity']:.2f} · Date: {src['date']} · Listing: {src['listing_id']}</div>
+                            <div style="font-size:13px; color:#8b949e; margin-top:4px;">"{src['comment']}"</div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+    with ai_sub2:
+        st.markdown('<div class="section-header"><h3>Content-Based Listing Recommendation System</h3><span class="section-pill">Recommendation Engine</span></div>', unsafe_allow_html=True)
+        st.markdown("Choose an active listing ID to find the top 5 most similar listing alternatives in the same neighbourhood.")
+        listing_options = sorted(df["id"].dropna().unique().tolist())
+        selected_listing_id = st.selectbox("Select Target Listing ID:", listing_options[:200]) # limit dropdown size
+        if st.button("Generate Recommendations", width="stretch"):
+            recommender = get_recommender()
+            recs = recommender.recommend(selected_listing_id)
+            if not recs.empty:
+                st.success("Matching listing recommendations found:")
+                st.dataframe(recs, width="stretch")
+            else:
+                st.warning("No similar listings found. Try selecting another listing ID.")
+                
+    with ai_sub3:
+        st.markdown('<div class="section-header"><h3>AI-Driven Seasonal Dynamic Pricing Agent</h3><span class="section-pill">ML Pricing Agent</span></div>', unsafe_allow_html=True)
+        st.markdown("Input listing configuration and get a fair baseline nightly price predicted by the Random Forest model, adjusted dynamically based on monthly occupancy forecasting peaks and troughs.")
+        
+        pr_c1, pr_c2 = st.columns(2)
+        with pr_c1:
+            in_borough = st.selectbox("Borough:", sorted(df["neighbourhood_group_cleansed"].dropna().unique().tolist()))
+            in_room_type = st.selectbox("Room Type:", sorted(df["room_type"].dropna().unique().tolist()))
+            in_month = st.selectbox("Month of Year:", ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"])
+        with pr_c2:
+            in_bedrooms = st.slider("Bedrooms count:", 0, 5, 1)
+            in_beds = st.slider("Beds count:", 1, 10, 1)
+            in_rating = st.slider("Target reviews score rating:", 1.0, 5.0, 4.8, 0.1)
+            in_superhost = st.checkbox("Superhost badge status", value=True)
+            superhost_str = "t" if in_superhost else "f"
+            
+        if st.button("Calculate Suggested Rate", width="stretch"):
+            agent = get_pricing_agent()
+            p_res = agent.predict_price(
+                bedrooms=in_bedrooms,
+                beds=in_beds,
+                borough=in_borough,
+                room_type=in_room_type,
+                rating=in_rating,
+                superhost=superhost_str,
+                month_name=in_month
+            )
+            
+            st.write("")
+            st.markdown(f"""
+            <div class="glass-card" style="text-align:center; border-left:4px solid #FF5A5F;">
+                <div class="kpi-label">💡 Suggested Nightly Rate</div>
+                <div style="font-size:36px; font-weight:800; color:#e6edf3; margin-top:8px;">${p_res['final_suggested_price']:.2f}</div>
+                <div style="font-size:13px; color:#8b949e; margin-top:8px;">Base Predicted Price: ${p_res['base_predicted_price']:.2f}</div>
+                <div style="font-size:13px; color:#8b949e; margin-top:4px;">Seasonal Adjustment: x{p_res['seasonal_multiplier']:.2f} ({p_res['reason']})</div>
+                <div style="font-size:12px; color:#3fb950; font-weight:600; margin-top:12px;">{p_res['advice']}</div>
+            </div>
+            """, unsafe_allow_html=True)
+

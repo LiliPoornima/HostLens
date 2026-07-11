@@ -195,9 +195,10 @@ def build_pdf_report():
         ["11. Driver Analysis & Multi-collinearity (OLS & VIF)", ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .", "Page 20"],
         ["12. Machine Learning: Price Prediction & Bias Analysis", ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .", "Page 21"],
         ["13. NLP Review Sentiment & Topic Modeling (LDA)", ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .", "Page 23"],
-        ["14. Strategic Business Recommendations", ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .", "Page 25"],
-        ["15. Dataset Limitations, Reflections & Future Directions", ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .", "Page 26"],
-        ["Appendix A: AI Usage Disclosure", ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .", "Page 27"]
+        ["14. AI Intelligence Hub: RAG & Dynamic Pricing Agents", ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .", "Page 25"],
+        ["15. Strategic Business Recommendations", ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .", "Page 26"],
+        ["16. Dataset Limitations, Reflections & Future Directions", ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .", "Page 27"],
+        ["Appendix A: AI Usage Disclosure", ". . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . . .", "Page 28"]
     ]
     
     t_toc = Table(toc_data, colWidths=[180, 260, 60])
@@ -792,8 +793,18 @@ def build_pdf_report():
     add_para("<b>NLP Interpretation:</b> The topic themes highlight the main drivers of guest satisfaction (check-in convenience, host hospitality, bed comfort, room cleanliness, and proximity to subway transport). These qualitative features can be leveraged for search ranking filters and automated listing improvement reports.")
     add_page_break()
 
+    # PAGE 24b (NEW): AI INTELLIGENCE HUB EXPERIMENTS
+    add_h1("14. AI Intelligence Hub: RAG & Dynamic Pricing Agents")
+    add_spacer(10)
+    add_para("To implement Sections 07.2 - 07.4 of the assignment and showcase advanced AI and ML capabilities, we created a dedicated AI intelligence module in <b>src/ai_agent.py</b>. This integrates three primary agentic components directly with the interactive Streamlit dashboard:")
+    add_spacer(5)
+    add_para("• <b>Reviews Q&A Console (Retrieval-Augmented Generation - RAG):</b> Uses a TF-IDF vectorizer over the reviews database containing 990k records (sampled to 30,000 for rapid local execution) to perform semantic searches. For any user query, the RAG engine computes cosine similarities, extracts the top 3 relevant comments, and synthesizes them into structured feedback analyses.")
+    add_para("• <b>Content-Based Recommender System:</b> Recommends listing alternatives based on cosine distance over price, bedrooms, beds, ratings, room types, and coordinates. This resolves cold-start issues for users looking for comparable properties.")
+    add_para("• <b>Agentic Seasonal Dynamic Pricing Advisor:</b> Uses the serialized Random Forest regressor to predict baseline pricing, then merges occupancy forecasts from the Holt's Exponential Smoothing time-series model. It adjusts baseline rates dynamically—adding a 10% premium during high forecasted demand months and providing a 10% discount in slow seasons.")
+    add_page_break()
+
     # PAGE 22: STRATEGIC BUSINESS RECOMMENDATIONS
-    add_h1("14. Strategic Business Recommendations")
+    add_h1("15. Strategic Business Recommendations")
     add_spacer(10)
     add_para("Based on our data engineering pipeline, database queries, and predictive models, we outline actionable business recommendations:")
     add_spacer(10)
@@ -812,7 +823,7 @@ def build_pdf_report():
     add_page_break()
 
     # PAGE 23: LIMITATIONS, REFLECTIONS & FUTURE
-    add_h1("15. Limitations, Reflections & Future Directions")
+    add_h1("16. Limitations, Reflections & Future Directions")
     add_spacer(10)
     add_h2("Study Limitations:")
     add_para("• <b>Missing Dynamic Prices:</b> Because calendar.csv lacks daily pricing history, our seasonality estimates are based on listing base rates. Implementing daily pricing scrapes would allow finer revenue models.")

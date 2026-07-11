@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 from sklearn.model_selection import KFold
 from sklearn.linear_model import Ridge
-from sklearn.ensemble import RandomForestRegressor, GradientBoostingRegressor
+from sklearn.ensemble import RandomForestRegressor, HistGradientBoostingRegressor
 from sklearn.metrics import mean_absolute_error, root_mean_squared_error, mean_absolute_percentage_error
 from sklearn.preprocessing import StandardScaler
 from sklearn.inspection import permutation_importance
@@ -108,7 +108,7 @@ def run_ml_and_sentiment():
     models = {
         "Ridge Regression": Ridge(alpha=1.0),
         "Random Forest": RandomForestRegressor(n_estimators=50, max_depth=12, random_state=42, n_jobs=-1),
-        "Gradient Boosting": GradientBoostingRegressor(n_estimators=100, max_depth=6, random_state=42)
+        "Gradient Boosting": HistGradientBoostingRegressor(max_iter=100, max_depth=6, random_state=42)
     }
     
     model_results = {}
@@ -152,6 +152,14 @@ def run_ml_and_sentiment():
     # Fit a final Random Forest to extract feature importances
     rf_final = RandomForestRegressor(n_estimators=50, max_depth=12, random_state=42, n_jobs=-1)
     rf_final.fit(X_scaled, y_log)
+    
+    # Serialize models
+    import joblib
+    joblib.dump(rf_final, "reports/pricing_model.joblib")
+    joblib.dump(scaler, "reports/scaler.joblib")
+    with open("reports/model_features.json", "w") as f:
+        json.dump(list(X.columns), f)
+    print("Serialized ML model, scaler, and column names to reports/")
     
     # Feature Importance (Standard Gini Importance)
     feat_importances = pd.DataFrame({
