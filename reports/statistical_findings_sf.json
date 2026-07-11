@@ -1,0 +1,45 @@
+{
+    "H1": {
+        "test": "Welch's Two-Sample t-test",
+        "entire_home_mean": 412.9976144739781,
+        "private_room_mean": 318.03721985265605,
+        "t_statistic": 2.3170272676390593,
+        "p_value": 0.020573799069779686,
+        "cohens_d": 0.07242175476571659,
+        "significant": true
+    },
+    "H2": {
+        "test": "Welch's Two-Sample t-test",
+        "superhost_mean_rating": 4.895270072992701,
+        "non_superhost_mean_rating": 4.7727587110296055,
+        "t_statistic": 17.05905443421862,
+        "p_value": 1.7087999981747014e-63,
+        "cohens_d": 0.38590169323042844,
+        "significant": true
+    },
+    "H3": {
+        "test": "Welch's Two-Sample t-test",
+        "more_reviews_mean_price": 336.8165363610233,
+        "fewer_reviews_mean_price": 424.71650402283933,
+        "t_statistic": -3.056436123150998,
+        "p_value": 0.0022539404411741964,
+        "cohens_d": -0.06819660376819081,
+        "significant": true
+    },
+    "H4": {
+        "test": "One-Way ANOVA",
+        "f_statistic": 2.8286544639017883,
+        "p_value": 5.8271425027779636e-08,
+        "eta_squared": 0.013387811673889808,
+        "significant": true
+    },
+    "H5": {
+        "test": "Chi-Square Test of Independence (Occupancy Proxy)",
+        "weekend_occupancy_rate": 0.501899239267873,
+        "weekday_occupancy_rate": 0.49701260929761476,
+        "chi2_statistic": 52.70165082793974,
+        "p_value": 3.882646218211285e-13,
+        "cramers_v": 0.0044106764662963805,
+        "significant": true
+    }
+}
