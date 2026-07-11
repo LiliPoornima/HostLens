@@ -248,6 +248,17 @@ def get_pricing_agent():
     from ai_agent import PricingAgent
     return PricingAgent()
 
+PLOTLY_THEME = dict(
+    paper_bgcolor="rgba(0,0,0,0)",
+    plot_bgcolor="rgba(22,27,34,0.5)",
+    font=dict(family="Inter", color="#8b949e"),
+    xaxis=dict(gridcolor="rgba(255,255,255,0.05)", linecolor="rgba(255,255,255,0.07)"),
+    yaxis=dict(gridcolor="rgba(255,255,255,0.05)", linecolor="rgba(255,255,255,0.07)"),
+    margin=dict(t=30, b=40, l=40, r=20),
+)
+
+BRAND_COLORS = ["#FF5A5F", "#00A699", "#FC642D", "#3a86ff", "#f7b731", "#a855f7", "#3fb950"]
+
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12 = st.tabs([
     "📊 Market Overview",
     "🗺️ Map Explorer",
