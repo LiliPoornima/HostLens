@@ -1,0 +1,15 @@
+feature,importance
+beds,0.19915468347415835
+desc_len,0.1517559856051946
+room_type_Private Room,0.14392238175493594
+bedrooms,0.09832971868986343
+neighbourhood_group_cleansed_Manhattan,0.09401053017986956
+number_of_reviews,0.09111798885362661
+name_len,0.08155881237129696
+review_scores_rating,0.05396268390768409
+room_type_Hotel Room,0.027229267301601145
+host_is_superhost,0.022163072167624642
+room_type_Shared Room,0.018431412435620534
+neighbourhood_group_cleansed_Brooklyn,0.012136714680892642
+neighbourhood_group_cleansed_Queens,0.004325949450216859
+neighbourhood_group_cleansed_Staten Island,0.0019007991274148479
