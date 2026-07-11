@@ -180,7 +180,7 @@ st.markdown(f"""
 # ─────────────────────────────────────────────
 # TABS
 # ─────────────────────────────────────────────
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9 = st.tabs([
     "📊 Market Overview",
     "🗺️ Map Explorer",
     "👥 Host & Reviews",
@@ -188,7 +188,8 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8 = st.tabs([
     "🔮 Occupancy Forecast",
     "⚙️ Pipeline Telemetry",
     "💻 SQL Console",
-    "🤖 AI Intelligence Hub"
+    "🤖 AI Intelligence Hub",
+    "📐 Statistical Analysis"
 ])
 
 PLOTLY_THEME = dict(
@@ -352,6 +353,62 @@ with tab2:
     fig_dens.update_layout(**dens_layout)
     st.plotly_chart(fig_dens, width="stretch")
 
+    # GAP 2: Spatial Review Scores Map
+    st.markdown('<div class="section-header"><h3>Spatial Review Score Map</h3><span class="section-pill">Avg Rating by Location</span></div>', unsafe_allow_html=True)
+    st.markdown("Each dot represents a listing coloured by its review score. Darker red = lower ratings; green = higher. Use this to identify consistently high/low rating clusters.")
+    spatial_rating_df = (
+        filtered_df[["latitude", "longitude", "review_scores_rating",
+                      "neighbourhood_cleansed", "neighbourhood_group_cleansed", "price"]]
+        .dropna(subset=["review_scores_rating", "latitude", "longitude"])
+    )
+    spatial_rating_df = spatial_rating_df.sample(min(8000, len(spatial_rating_df)), random_state=7)
+    fig_rating_map = px.scatter_mapbox(
+        spatial_rating_df,
+        lat="latitude", lon="longitude",
+        color="review_scores_rating",
+        size_max=8, opacity=0.75,
+        color_continuous_scale=["#f85149", "#f7b731", "#3fb950"],
+        range_color=[3.5, 5.0],
+        hover_name="neighbourhood_cleansed",
+        hover_data={"latitude": False, "longitude": False,
+                    "review_scores_rating": True,
+                    "neighbourhood_group_cleansed": True, "price": True},
+        mapbox_style="carto-darkmatter",
+        zoom=10, center={"lat": 40.7128, "lon": -74.0060},
+        labels={"review_scores_rating": "Rating", "neighbourhood_group_cleansed": "Borough"},
+    )
+    fig_rating_map.update_layout(
+        paper_bgcolor="rgba(0,0,0,0)",
+        margin=dict(t=0, b=0, l=0, r=0), height=480,
+        coloraxis_colorbar=dict(
+            title=dict(text="Review<br>Score", font=dict(color="#8b949e")),
+            thicknessmode="pixels", thickness=14,
+            lenmode="fraction", len=0.6,
+            bgcolor="rgba(22,27,34,0.8)",
+            bordercolor="rgba(255,255,255,0.07)",
+            tickfont=dict(color="#8b949e"),
+        ),
+    )
+    st.plotly_chart(fig_rating_map, width="stretch")
+
+    # Avg rating by neighbourhood table
+    st.markdown('<div class="section-header"><h3>Average Rating by Neighbourhood (Top 20 vs Bottom 10)</h3></div>', unsafe_allow_html=True)
+    nbh_rating = (
+        filtered_df.groupby(["neighbourhood_cleansed", "neighbourhood_group_cleansed"])
+        .agg(avg_rating=("review_scores_rating", "mean"), count=("review_scores_rating", "count"))
+        .reset_index()
+        .query("count >= 10")
+        .sort_values("avg_rating", ascending=False)
+    )
+    nbh_rating["avg_rating"] = nbh_rating["avg_rating"].round(3)
+    mr1, mr2 = st.columns(2)
+    with mr1:
+        st.markdown("**🟢 Top 10 Highest Rated Neighbourhoods**")
+        st.dataframe(nbh_rating.head(10).rename(columns={"neighbourhood_cleansed": "Neighbourhood", "neighbourhood_group_cleansed": "Borough", "avg_rating": "Avg Rating", "count": "Listings"}), width="stretch")
+    with mr2:
+        st.markdown("**🔴 Bottom 10 Lowest Rated Neighbourhoods**")
+        st.dataframe(nbh_rating.tail(10).rename(columns={"neighbourhood_cleansed": "Neighbourhood", "neighbourhood_group_cleansed": "Borough", "avg_rating": "Avg Rating", "count": "Listings"}), width="stretch")
+
 # ════════════════════════════════════════════
 # TAB 3 — HOST & REVIEWS
 # ════════════════════════════════════════════
@@ -436,6 +493,87 @@ with tab3:
             st.info("No sentiment data points available for the current filter.")
     else:
         st.info("ℹ️ Sentiment scores not computed yet. Run `python src/machine_learning.py`.")
+
+    # GAP 5: Host Tenure Distribution
+    st.markdown("---")
+    st.markdown('<div class="section-header"><h3>Host Tenure Distribution</h3><span class="section-pill">Years on Platform</span></div>', unsafe_allow_html=True)
+    st.markdown("How long have hosts been active? Newer hosts may price differently than established Superhosts with years of platform experience.")
+    if "host_tenure_years" in filtered_df.columns:
+        tenure_df = filtered_df["host_tenure_years"].dropna()
+        fig_tenure = px.histogram(
+            tenure_df, nbins=30,
+            color_discrete_sequence=["#3a86ff"],
+            labels={"value": "Host Tenure (Years)", "count": "Number of Hosts"},
+        )
+        fig_tenure.update_layout(**PLOTLY_THEME, bargap=0.05,
+                                  xaxis_title="Host Tenure (Years)", yaxis_title="Number of Listings",
+                                  height=280)
+        st.plotly_chart(fig_tenure, width="stretch")
+        # Tenure vs price scatter
+        tenure_price = filtered_df[["host_tenure_years", "price", "host_is_superhost"]].dropna()
+        tenure_price["Host Type"] = tenure_price["host_is_superhost"].map(
+            lambda x: "⭐ Superhost" if str(x).strip().lower() in ["t", "true", "1"] else "Regular Host"
+        )
+        tenure_price = tenure_price[tenure_price["price"] <= 600]
+        fig_ten_price = px.scatter(
+            tenure_price.sample(min(3000, len(tenure_price)), random_state=5),
+            x="host_tenure_years", y="price", color="Host Type",
+            color_discrete_map={"⭐ Superhost": "#f7b731", "Regular Host": "#8b949e"},
+            opacity=0.5, trendline="lowess",
+            labels={"host_tenure_years": "Host Tenure (Years)", "price": "Nightly Price ($)"},
+        )
+        fig_ten_price.update_layout(**PLOTLY_THEME, height=300)
+        st.plotly_chart(fig_ten_price, width="stretch")
+
+    # GAP 6: Review Sub-Dimensions
+    st.markdown("---")
+    st.markdown('<div class="section-header"><h3>Review Score Sub-Dimensions</h3><span class="section-pill">6 Dimensions Compared</span></div>', unsafe_allow_html=True)
+    st.markdown("Decompose guest feedback across 6 scored dimensions: Accuracy, Cleanliness, Check-in, Communication, Location, and Value — revealing where experience truly differs by room type.")
+    sub_dim_cols = ["review_scores_accuracy", "review_scores_cleanliness",
+                    "review_scores_checkin", "review_scores_communication",
+                    "review_scores_location", "review_scores_value"]
+    sub_dim_labels = {"review_scores_accuracy": "Accuracy", "review_scores_cleanliness": "Cleanliness",
+                      "review_scores_checkin": "Check-in", "review_scores_communication": "Communication",
+                      "review_scores_location": "Location", "review_scores_value": "Value"}
+    available_sub_dims = [c for c in sub_dim_cols if c in filtered_df.columns]
+    if available_sub_dims:
+        sd1, sd2 = st.columns(2)
+        with sd1:
+            # Avg sub-dimension scores by room type as heatmap-style bar
+            sub_grp = filtered_df.groupby("room_type")[available_sub_dims].mean().reset_index()
+            sub_melted = sub_grp.melt(id_vars="room_type", var_name="Dimension", value_name="Score")
+            sub_melted["Dimension"] = sub_melted["Dimension"].map(sub_dim_labels)
+            fig_sub = px.bar(
+                sub_melted, x="Score", y="Dimension", color="room_type",
+                barmode="group", orientation="h",
+                color_discrete_sequence=BRAND_COLORS,
+                labels={"Score": "Average Score", "Dimension": "Review Dimension", "room_type": "Room Type"},
+            )
+            fig_sub.update_layout(**PLOTLY_THEME, height=380, xaxis_range=[3.5, 5.0])
+            st.plotly_chart(fig_sub, width="stretch")
+        with sd2:
+            # Radar-style: avg sub-dim scores by borough as table
+            sub_boro = filtered_df.groupby("neighbourhood_group_cleansed")[available_sub_dims].mean().round(2)
+            sub_boro.columns = [sub_dim_labels.get(c, c) for c in sub_boro.columns]
+            st.markdown("**Average sub-scores by Borough:**")
+            st.dataframe(sub_boro.style.background_gradient(cmap="RdYlGn", axis=None, vmin=4.0, vmax=5.0), width="stretch")
+
+    # GAP 7: Minimum Nights Seasonal Chart
+    st.markdown("---")
+    st.markdown('<div class="section-header"><h3>Minimum Nights Policy — Distribution by Room Type</h3><span class="section-pill">Policy Analysis</span></div>', unsafe_allow_html=True)
+    st.markdown("Hosts with higher minimum-night requirements often target longer-stay guests. This distribution reveals polarisation between 1-night casual rental listings and 30+ night long-term lease properties.")
+    if "minimum_nights" in filtered_df.columns:
+        min_nights_df = filtered_df[filtered_df["minimum_nights"] <= 90].copy()
+        fig_min = px.histogram(
+            min_nights_df, x="minimum_nights", color="room_type",
+            nbins=45, barmode="overlay", opacity=0.75,
+            color_discrete_sequence=BRAND_COLORS,
+            labels={"minimum_nights": "Minimum Nights Required", "count": "Listings", "room_type": "Room Type"},
+        )
+        fig_min.update_layout(**PLOTLY_THEME, bargap=0.05, height=300,
+                               xaxis_title="Minimum Nights Required (capped at 90)",
+                               yaxis_title="Number of Listings")
+        st.plotly_chart(fig_min, width="stretch")
 
 # ════════════════════════════════════════════
 # TAB 4 — ML & EXPLAINABILITY
@@ -523,6 +661,38 @@ with tab4:
                                   title="MAPE by Room Type", title_font=dict(color="#e6edf3", size=14))
             st.plotly_chart(fig_br, width="stretch")
             st.dataframe(df_bias_r.style.background_gradient(subset=["mape"], cmap="Reds"), width="stretch")
+
+    # GAP 4: Correlation Matrix Heatmap
+    st.markdown("---")
+    st.markdown('<div class="section-header"><h3>Feature Correlation Matrix</h3><span class="section-pill">Pearson Correlation</span></div>', unsafe_allow_html=True)
+    st.markdown("Pearson correlations across all key numerical predictors. Strong positive correlations (dark red) indicate features that move together; negative correlations (dark blue) move inversely.")
+    df_corr = load_report("reports/correlation_matrix.csv")
+    if df_corr is not None:
+        # The CSV has a row-index column
+        if df_corr.columns[0] not in ["price", "bedrooms"]:
+            df_corr = df_corr.set_index(df_corr.columns[0])
+        fig_corr = px.imshow(
+            df_corr.astype(float),
+            color_continuous_scale="RdBu_r",
+            zmin=-1, zmax=1,
+            text_auto=".2f",
+            labels={"color": "Correlation"},
+        )
+        fig_corr.update_layout(
+            paper_bgcolor="rgba(0,0,0,0)",
+            plot_bgcolor="rgba(22,27,34,0.5)",
+            font=dict(family="Inter", color="#8b949e"),
+            margin=dict(t=40, b=40, l=80, r=40),
+            height=440,
+            coloraxis_colorbar=dict(
+                thicknessmode="pixels", thickness=14,
+                bgcolor="rgba(22,27,34,0.8)",
+                tickfont=dict(color="#8b949e"),
+            ),
+        )
+        st.plotly_chart(fig_corr, width="stretch")
+    else:
+        st.warning("⚠️ Correlation matrix not found. Run `python src/statistics_analysis.py`.")
 
 # ════════════════════════════════════════════
 # TAB 5 — OCCUPANCY FORECAST
@@ -882,4 +1052,189 @@ with tab8:
                 <div style="font-size:12px; color:#3fb950; font-weight:600; margin-top:12px;">{p_res['advice']}</div>
             </div>
             """, unsafe_allow_html=True)
+
+# ════════════════════════════════════════════
+# TAB 9 — STATISTICAL ANALYSIS
+# ════════════════════════════════════════════
+with tab9:
+    st.markdown("""
+    <div class="glass-card">
+        <div style="display:flex;align-items:center;gap:12px">
+            <div style="font-size:28px">📐</div>
+            <div>
+                <div style="font-size:16px;font-weight:700;color:#e6edf3">Statistical Hypothesis Testing & Analysis</div>
+                <div style="font-size:13px;color:#8b949e">Welch's t-tests · One-Way ANOVA · Chi-Square · Bonferroni Correction · Confidence Intervals · Effect Sizes</div>
+            </div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # GAP 1: H1-H5 Live Stats Table
+    st.markdown('<div class="section-header"><h3>Hypothesis Test Results — H1 to H5</h3><span class="section-pill">With Bonferroni Correction</span></div>', unsafe_allow_html=True)
+    st.markdown("Each hypothesis is tested against its appropriate statistical test. **Bonferroni correction** is applied across H1–H5 (5 tests), so the corrected significance threshold is α/5 = **0.01**. Effect sizes (Cohen's d, Eta², Cramér's V) indicate practical — not just statistical — significance.")
+
+    stat_path = "reports/statistical_findings.json"
+    if os.path.exists(stat_path):
+        with open(stat_path) as _f:
+            _findings = json.load(_f)
+
+        _n_tests = 5
+        _bonf_alpha = 0.05 / _n_tests  # 0.01
+
+        _hyp_rows = []
+
+        # H1
+        h1 = _findings.get("H1", {})
+        _hyp_rows.append({
+            "Hypothesis": "H1: Entire-home > Private Room price",
+            "Test": h1.get("test", "Welch's t-test"),
+            "Statistic": f"t = {h1.get('t_statistic', 0):.3f}",
+            "p-value": f"{h1.get('p_value', 1):.2e}",
+            "Effect Size": f"Cohen's d = {h1.get('cohens_d', 0):.3f}",
+            "Bonf. Significant (α=0.01)": "✅ Yes" if h1.get("p_value", 1) < _bonf_alpha else "❌ No",
+            "Means": f"Entire: ${h1.get('entire_home_mean', 0):.0f}  |  Private: ${h1.get('private_room_mean', 0):.0f}"
+        })
+        # H2
+        h2 = _findings.get("H2", {})
+        _hyp_rows.append({
+            "Hypothesis": "H2: Superhost ratings > Non-superhost",
+            "Test": h2.get("test", "Welch's t-test"),
+            "Statistic": f"t = {h2.get('t_statistic', 0):.3f}",
+            "p-value": f"{h2.get('p_value', 1):.2e}",
+            "Effect Size": f"Cohen's d = {h2.get('cohens_d', 0):.3f}",
+            "Bonf. Significant (α=0.01)": "✅ Yes" if h2.get("p_value", 1) < _bonf_alpha else "❌ No",
+            "Means": f"Super: {h2.get('superhost_mean_rating', 0):.3f}  |  Regular: {h2.get('non_superhost_mean_rating', 0):.3f}"
+        })
+        # H3
+        h3 = _findings.get("H3", {})
+        _hyp_rows.append({
+            "Hypothesis": "H3: >10 reviews price ≠ ≤10 reviews",
+            "Test": h3.get("test", "Welch's t-test"),
+            "Statistic": f"t = {h3.get('t_statistic', 0):.3f}",
+            "p-value": f"{h3.get('p_value', 1):.2e}",
+            "Effect Size": f"Cohen's d = {h3.get('cohens_d', 0):.3f}",
+            "Bonf. Significant (α=0.01)": "✅ Yes" if h3.get("p_value", 1) < _bonf_alpha else "❌ No",
+            "Means": f"More: ${h3.get('more_reviews_mean_price', 0):.0f}  |  Fewer: ${h3.get('fewer_reviews_mean_price', 0):.0f}"
+        })
+        # H4
+        h4 = _findings.get("H4", {})
+        _hyp_rows.append({
+            "Hypothesis": "H4: Borough price differences (ANOVA)",
+            "Test": h4.get("test", "One-Way ANOVA"),
+            "Statistic": f"F = {h4.get('f_statistic', 0):.3f}",
+            "p-value": f"{h4.get('p_value', 1):.2e}",
+            "Effect Size": f"η² = {h4.get('eta_squared', 0):.4f}",
+            "Bonf. Significant (α=0.01)": "✅ Yes" if h4.get("p_value", 1) < _bonf_alpha else "❌ No",
+            "Means": "See borough price breakdown"
+        })
+        # H5
+        h5 = _findings.get("H5", {})
+        _hyp_rows.append({
+            "Hypothesis": "H5: Weekend vs weekday occupancy (χ²)",
+            "Test": h5.get("test", "Chi-Square"),
+            "Statistic": f"χ² = {h5.get('chi2_statistic', 0):.3f}",
+            "p-value": f"{h5.get('p_value', 1):.2e}",
+            "Effect Size": f"Cramér's V = {h5.get('cramers_v', 0):.4f}",
+            "Bonf. Significant (α=0.01)": "✅ Yes" if h5.get("p_value", 1) < _bonf_alpha else "❌ No",
+            "Means": f"Wkend occ: {h5.get('weekend_occupancy_rate', 0)*100:.1f}%  |  Wkday: {h5.get('weekday_occupancy_rate', 0)*100:.1f}%"
+        })
+
+        _hyp_df = pd.DataFrame(_hyp_rows)
+        st.dataframe(_hyp_df, width="stretch")
+
+        # Summary badges
+        n_sig = sum(1 for r in _hyp_rows if "✅" in r["Bonf. Significant (α=0.01)"])
+        st.markdown(f"""
+        <div class="glass-card" style="display:flex;gap:24px;flex-wrap:wrap;">
+            <div><span style="font-size:22px;font-weight:800;color:#3fb950">{n_sig}</span> <span style="color:#8b949e;font-size:13px">hypotheses significant at Bonferroni α=0.01</span></div>
+            <div><span style="font-size:22px;font-weight:800;color:#f85149">{5-n_sig}</span> <span style="color:#8b949e;font-size:13px">fail to reject under corrected threshold</span></div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    else:
+        st.warning("⚠️ Statistical findings not found. Run `python src/statistics_analysis.py` first.")
+
+    st.markdown("---")
+
+    # GAP 3: Confidence Intervals for Mean Price
+    st.markdown('<div class="section-header"><h3>95% Confidence Intervals for Mean Nightly Price</h3><span class="section-pill">By Borough & Room Type</span></div>', unsafe_allow_html=True)
+    st.markdown("95% confidence intervals computed from the **filtered listing dataset**. Wider intervals indicate fewer listings or higher price variance. Non-overlapping intervals confirm statistically distinguishable pricing between groups.")
+
+    from scipy import stats as _stats
+
+    def _ci95(series):
+        n = len(series)
+        if n < 2:
+            return (np.nan, np.nan)
+        se = _stats.sem(series)
+        h = se * _stats.t.ppf(0.975, df=n-1)
+        return (series.mean() - h, series.mean() + h)
+
+    ci1, ci2 = st.columns(2)
+
+    with ci1:
+        st.markdown("**By Borough:**")
+        _boro_ci = []
+        for _boro, _grp in filtered_df.groupby("neighbourhood_group_cleansed")["price"]:
+            _low, _high = _ci95(_grp.dropna())
+            _boro_ci.append({"Borough": _boro, "Mean ($)": round(_grp.mean(), 2),
+                             "CI Low ($)": round(_low, 2), "CI High ($)": round(_high, 2),
+                             "n": len(_grp)})
+        _boro_ci_df = pd.DataFrame(_boro_ci).sort_values("Mean ($)", ascending=False)
+
+        fig_ci_b = go.Figure()
+        for _, _row in _boro_ci_df.iterrows():
+            fig_ci_b.add_trace(go.Scatter(
+                x=[_row["CI Low ($)"], _row["Mean ($)"], _row["CI High ($)"]],
+                y=[_row["Borough"], _row["Borough"], _row["Borough"]],
+                mode="lines+markers",
+                marker=dict(color=["#8b949e", "#FF5A5F", "#8b949e"], size=[6, 10, 6]),
+                line=dict(color="#FF5A5F", width=2),
+                name=_row["Borough"],
+                showlegend=False,
+            ))
+        fig_ci_b.update_layout(**PLOTLY_THEME, height=280,
+                               xaxis_title="Nightly Price ($)",
+                               yaxis_title="Borough")
+        st.plotly_chart(fig_ci_b, width="stretch")
+        st.dataframe(_boro_ci_df, width="stretch")
+
+    with ci2:
+        st.markdown("**By Room Type:**")
+        _room_ci = []
+        for _room, _grp in filtered_df.groupby("room_type")["price"]:
+            _low, _high = _ci95(_grp.dropna())
+            _room_ci.append({"Room Type": _room, "Mean ($)": round(_grp.mean(), 2),
+                             "CI Low ($)": round(_low, 2), "CI High ($)": round(_high, 2),
+                             "n": len(_grp)})
+        _room_ci_df = pd.DataFrame(_room_ci).sort_values("Mean ($)", ascending=False)
+
+        fig_ci_r = go.Figure()
+        for _, _row in _room_ci_df.iterrows():
+            fig_ci_r.add_trace(go.Scatter(
+                x=[_row["CI Low ($)"], _row["Mean ($)"], _row["CI High ($)"]],
+                y=[_row["Room Type"], _row["Room Type"], _row["Room Type"]],
+                mode="lines+markers",
+                marker=dict(color=["#8b949e", "#00A699", "#8b949e"], size=[6, 10, 6]),
+                line=dict(color="#00A699", width=2),
+                name=_row["Room Type"],
+                showlegend=False,
+            ))
+        fig_ci_r.update_layout(**PLOTLY_THEME, height=280,
+                               xaxis_title="Nightly Price ($)",
+                               yaxis_title="Room Type")
+        st.plotly_chart(fig_ci_r, width="stretch")
+        st.dataframe(_room_ci_df, width="stretch")
+
+    st.markdown("---")
+    # 5.4 Multi-comparison note
+    st.markdown('<div class="section-header"><h3>Multi-Comparison Correction — Bonferroni Method</h3><span class="section-pill">Section 5.4</span></div>', unsafe_allow_html=True)
+    st.markdown("""
+    Since we performed **5 simultaneous hypothesis tests (H1–H5)**, the probability of at least one false positive at the standard α=0.05 threshold increases to approximately **1 - (0.95)⁵ ≈ 22.6%**.
+
+    **Bonferroni correction** adjusts the significance threshold to **α = 0.05 / 5 = 0.010**. Results in the table above use this corrected threshold.
+
+    > **Practical note:** All 5 tests pass both the uncorrected (α=0.05) and the Bonferroni-corrected (α=0.01) threshold. This means our findings are robust to multiple-comparison inflation. However, for H3 and H5, the Cohen's d and Cramér's V effect sizes are very small — the differences are statistically significant due to large sample sizes (N ≈ 20,000+ listings) but may not be practically meaningful for a host or investor.
+    """)
+
 
