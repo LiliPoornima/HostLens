@@ -248,16 +248,23 @@ def get_pricing_agent():
     from ai_agent import PricingAgent
     return PricingAgent()
 
-tab1, tab2, tab3 = st.tabs([
-    "📊 Market Insights",
-    "🧠 ML & Analytics",
-    "⚙️ Systems & Engineering"
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12 = st.tabs([
+    "📊 Market Overview",
+    "🗺️ Map Explorer",
+    "👥 Host & Reviews",
+    "🤖 ML & Explainability",
+    "🔮 Occupancy Forecast",
+    "⚙️ Pipeline Telemetry",
+    "💻 SQL Console",
+    "🤖 AI Intelligence Hub",
+    "📐 Statistical Analysis",
+    "⚙️ MLOps & Governance",
+    "☁️ Architecture & Streaming",
+    "🌍 Cross-City Comparison",
 ])
 
 with tab1:
-    st.markdown('<p class="filter-label">🧭 View Mode</p>', unsafe_allow_html=True)
-    view1 = st.selectbox("Select View", ["Market Overview", "Map Explorer", "Host & Reviews", "Cross-City Comparison"], label_visibility="collapsed", key="nav_tab1")
-    if view1 == "Market Overview":
+    if True:
         avg_price = filtered_df["price"].mean()
         avg_rating = filtered_df["review_scores_rating"].mean()
         avg_occ = filtered_df["occupancy_rate"].mean() * 100 if "occupancy_rate" in filtered_df.columns else 0
@@ -352,7 +359,8 @@ with tab1:
     # ════════════════════════════════════════════
     # TAB 2 — MAP EXPLORER
     # ════════════════════════════════════════════
-    elif view1 == "Map Explorer":
+with tab2:
+    if True:
         st.markdown(f'<div class="section-header"><h3>Geographic Price Heatmap — {selected_city_name}</h3><span class="section-pill">Hover for Details</span></div>', unsafe_allow_html=True)
     
         # Use the group column for the city (neighbourhood_group_cleansed or neighbourhood_cleansed)
@@ -496,7 +504,8 @@ with tab1:
     # ════════════════════════════════════════════
     # TAB 3 — HOST & REVIEWS
     # ════════════════════════════════════════════
-    elif view1 == "Host & Reviews":
+with tab3:
+    if True:
         r1, r2 = st.columns(2)
     
         with r1:
@@ -662,7 +671,8 @@ with tab1:
     # ════════════════════════════════════════════
     # TAB 4 — ML & EXPLAINABILITY
     # ════════════════════════════════════════════
-    elif view1 == "Cross-City Comparison":
+with tab12:
+    if True:
         st.markdown("""
         <div class="section-header">
             <span style="font-size:22px">🌍</span>
@@ -837,10 +847,8 @@ with tab1:
     
     
 
-with tab2:
-    st.markdown('<p class="filter-label">🧭 View Mode</p>', unsafe_allow_html=True)
-    view2 = st.selectbox("Select View", ["ML & Explainability", "Occupancy Forecast", "Statistical Analysis", "AI Intelligence Hub"], label_visibility="collapsed", key="nav_tab2")
-    if view2 == "ML & Explainability":
+with tab4:
+    if True:
         st.markdown("""
         <div class="glass-card">
             <div style="display:flex;align-items:center;gap:12px">
@@ -1026,7 +1034,8 @@ with tab2:
     # ════════════════════════════════════════════
     # TAB 5 — OCCUPANCY FORECAST
     # ════════════════════════════════════════════
-    elif view2 == "Occupancy Forecast":
+with tab5:
+    if True:
         st.markdown("""
         <div class="glass-card">
             <div style="display:flex;align-items:center;gap:12px">
@@ -1107,7 +1116,8 @@ with tab2:
     # ════════════════════════════════════════════
     # TAB 6 — PIPELINE TELEMETRY
     # ════════════════════════════════════════════
-    elif view2 == "Statistical Analysis":
+with tab9:
+    if True:
         st.markdown("""
         <div class="glass-card">
             <div style="display:flex;align-items:center;gap:12px">
@@ -1291,7 +1301,8 @@ with tab2:
     # ════════════════════════════════════════════
     # TAB 10 — MLOPS & GOVERNANCE
     # ════════════════════════════════════════════
-    elif view2 == "AI Intelligence Hub":
+with tab8:
+    if True:
         st.markdown("""
         <div class="glass-card">
             <div style="display:flex;align-items:center;gap:12px">
@@ -1438,10 +1449,8 @@ with tab2:
     # TAB 9 — STATISTICAL ANALYSIS
     # ════════════════════════════════════════════
 
-with tab3:
-    st.markdown('<p class="filter-label">🧭 View Mode</p>', unsafe_allow_html=True)
-    view3 = st.selectbox("Select View", ["Pipeline Telemetry", "SQL Console", "MLOps & Governance", "Architecture & Streaming"], label_visibility="collapsed", key="nav_tab3")
-    if view3 == "Pipeline Telemetry":
+with tab6:
+    if True:
         st.markdown("""
         <div class="glass-card">
             <div style="display:flex;align-items:center;gap:12px">
@@ -1532,7 +1541,8 @@ with tab3:
     # ════════════════════════════════════════════
     # TAB 7 — SQL CONSOLE
     # ════════════════════════════════════════════
-    elif view3 == "SQL Console":
+with tab7:
+    if True:
         st.markdown("""
         <div class="glass-card">
             <div style="display:flex;align-items:center;gap:12px">
@@ -1607,7 +1617,8 @@ with tab3:
     # ════════════════════════════════════════════
     # TAB 8 — AI INTELLIGENCE HUB
     # ════════════════════════════════════════════
-    elif view3 == "MLOps & Governance":
+with tab10:
+    if True:
         st.markdown("""
         <div class="glass-card">
             <div style="display:flex;align-items:center;gap:12px">
@@ -1694,7 +1705,8 @@ with tab3:
     # ════════════════════════════════════════════
     # TAB 11 — ARCHITECTURE & STREAMING
     # ════════════════════════════════════════════
-    elif view3 == "Architecture & Streaming":
+with tab11:
+    if True:
         import sys as _sys
         import subprocess as _subprocess
         import threading as _threading
