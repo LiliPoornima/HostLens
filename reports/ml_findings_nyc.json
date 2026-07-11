@@ -1,0 +1,51 @@
+{
+    "sentiment_analysis": {
+        "review_sample_size": 100000,
+        "sentiment_rating_correlation": 0.016577317996474186,
+        "interpretation": "Positive correlation indicates reviews with cleaner, better hosts command higher rating scores."
+    },
+    "price_prediction_models": {
+        "Ridge Regression": {
+            "MAE": 135.06586021640666,
+            "RMSE": 1480.9775714605553,
+            "MAPE": 0.4916942374926525
+        },
+        "Random Forest": {
+            "MAE": 104.31623116331086,
+            "RMSE": 388.3268576785386,
+            "MAPE": 0.42716789760431906
+        },
+        "Gradient Boosting": {
+            "MAE": 106.73250063248477,
+            "RMSE": 396.8858805666554,
+            "MAPE": 0.4334077149920136
+        }
+    },
+    "extracted_review_topics": [
+        {
+            "topic_id": 1,
+            "theme": "Location & Public Transit",
+            "top_keywords": "br, apartment, great, place, subway, restaurants, stay, walk, close, manhattan"
+        },
+        {
+            "topic_id": 2,
+            "theme": "Host Hospitality & Communication",
+            "top_keywords": "la, muy, el, en, br, es, que, und, para, die"
+        },
+        {
+            "topic_id": 3,
+            "theme": "Room/Bed Comfort & Tidiness",
+            "top_keywords": "br, et, est, tr\u00e8s, le, la, nous, pour, appartement, les"
+        },
+        {
+            "topic_id": 4,
+            "theme": "Check-in/Check-out Experience",
+            "top_keywords": "great, stay, place, clean, location, nice, room, good, really, apartment"
+        },
+        {
+            "topic_id": 5,
+            "theme": "Apartment Cleanliness & Amenities",
+            "top_keywords": "great, stay, place, host, clean, location, apartment, definitely, recommend, check"
+        }
+    ]
+}
