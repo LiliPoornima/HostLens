@@ -90,10 +90,45 @@ st.markdown("""
 # ─────────────────────────────────────────────
 # DATA LOADING
 # ─────────────────────────────────────────────
+# City config — maps UI label to internal key and file paths
+CITY_CONFIG = {
+    "New York City": {
+        "key": "nyc",
+        "db": "data/processed/hostlens_nyc.db",
+        "listings": "data/processed/enriched_listings_nyc.csv",
+        "group_col": "neighbourhood_group_cleansed",
+        "group_label": "Borough",
+        "flag": "🗽"
+    },
+    "Boston": {
+        "key": "boston",
+        "db": "data/processed/hostlens_boston.db",
+        "listings": "data/processed/enriched_listings_boston.csv",
+        "group_col": "neighbourhood_cleansed",
+        "group_label": "Neighborhood",
+        "flag": "🫘"
+    },
+    "San Francisco": {
+        "key": "sf",
+        "db": "data/processed/hostlens_sf.db",
+        "listings": "data/processed/enriched_listings_sf.csv",
+        "group_col": "neighbourhood_cleansed",
+        "group_label": "Neighborhood",
+        "flag": "🌉"
+    }
+}
+
 @st.cache_data(ttl=300)
-def load_data():
-    df = pd.read_csv("data/processed/enriched_listings.csv")
-    return df
+def load_city_data(city_key):
+    cfg = next(v for v in CITY_CONFIG.values() if v["key"] == city_key)
+    path = cfg["listings"]
+    if os.path.exists(path):
+        return pd.read_csv(path)
+    # Fallback to legacy file for nyc
+    fallback = "data/processed/enriched_listings.csv"
+    if os.path.exists(fallback):
+        return pd.read_csv(fallback)
+    raise FileNotFoundError(f"No enriched listings found for {city_key}")
 
 @st.cache_data(ttl=300)
 def load_report(path):
@@ -102,18 +137,15 @@ def load_report(path):
     return None
 
 @st.cache_data(ttl=300)
-def load_metadata():
-    path = "reports/pipeline_metadata.json"
+def load_metadata(city_key="nyc"):
+    # Try city-specific metadata first, then fall back to shared file
+    city_path = f"reports/pipeline_metadata_{city_key}.json"
+    shared_path = "reports/pipeline_metadata.json"
+    path = city_path if os.path.exists(city_path) else shared_path
     if os.path.exists(path):
         with open(path) as f:
             return json.load(f)
     return None
-
-try:
-    df = load_data()
-except Exception as e:
-    st.error(f"**Data Load Error** — Run the ETL pipeline first: `python src/pipeline.py`\n\n{e}")
-    st.stop()
 
 # ─────────────────────────────────────────────
 # SIDEBAR
@@ -127,9 +159,28 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown('<p class="filter-label">📍 Borough</p>', unsafe_allow_html=True)
-    boroughs = ["All"] + sorted(df["neighbourhood_group_cleansed"].dropna().unique().tolist())
-    selected_borough = st.selectbox("Borough", boroughs, label_visibility="collapsed")
+    st.markdown('<p class="filter-label">🌆 Active Market</p>', unsafe_allow_html=True)
+    selected_city_name = st.selectbox(
+        "Market",
+        list(CITY_CONFIG.keys()),
+        index=0,
+        label_visibility="collapsed",
+        key="city_selector"
+    )
+    city_cfg = CITY_CONFIG[selected_city_name]
+    city_key = city_cfg["key"]
+    group_col = city_cfg["group_col"]
+    group_label = city_cfg["group_label"]
+
+    try:
+        df = load_city_data(city_key)
+    except Exception as e:
+        st.error(f"**Data Load Error** — Run the ETL pipeline first:\n`python src/pipeline.py --city {city_key}`\n\n{e}")
+        st.stop()
+
+    st.markdown(f'<p class="filter-label">📍 {group_label}</p>', unsafe_allow_html=True)
+    groups = ["All"] + sorted(df[group_col].dropna().unique().tolist())
+    selected_borough = st.selectbox(group_label, groups, label_visibility="collapsed", key="borough_selector")
 
     st.markdown('<p class="filter-label">🛏️ Room Type</p>', unsafe_allow_html=True)
     room_types = ["All"] + sorted(df["room_type"].dropna().unique().tolist())
@@ -143,13 +194,13 @@ with st.sidebar:
     st.markdown('<p class="filter-label">ℹ️ Dataset</p>', unsafe_allow_html=True)
     st.markdown(f"""
     <div style="color:#6e7681;font-size:12px;line-height:1.7">
+    {city_cfg['flag']} <b style="color:#8b949e">{selected_city_name}</b><br>
     🗄️ <b style="color:#8b949e">{len(df):,}</b> total listings<br>
-    📅 NYC Airbnb snapshot<br>
     🔗 Source: Inside Airbnb
     </div>
     """, unsafe_allow_html=True)
     st.markdown("")
-    if st.button("🔄 Refresh Data", width="stretch"):
+    if st.button("🔄 Refresh Data", use_container_width=True):
         st.cache_data.clear()
         st.rerun()
 
@@ -158,7 +209,7 @@ with st.sidebar:
 # ─────────────────────────────────────────────
 filtered_df = df.copy()
 if selected_borough != "All":
-    filtered_df = filtered_df[filtered_df["neighbourhood_group_cleansed"] == selected_borough]
+    filtered_df = filtered_df[filtered_df[group_col] == selected_borough]
 if selected_room_type != "All":
     filtered_df = filtered_df[filtered_df["room_type"] == selected_room_type]
 filtered_df = filtered_df[
@@ -171,8 +222,8 @@ filtered_df = filtered_df[
 # ─────────────────────────────────────────────
 st.markdown(f"""
 <div class="hero-banner">
-    <p class="hero-title">HostLens · NYC Airbnb Intelligence</p>
-    <p class="hero-subtitle">End-to-end data engineering, analytics, and ML insights for the New York City short-term rental market.</p>
+    <p class="hero-title">{city_cfg['flag']} HostLens · {selected_city_name} Airbnb Intelligence</p>
+    <p class="hero-subtitle">End-to-end data engineering, analytics, and ML insights for the {selected_city_name} short-term rental market.</p>
     <div class="hero-badge">🟢 Live · {len(filtered_df):,} listings matching filters</div>
 </div>
 """, unsafe_allow_html=True)
@@ -180,7 +231,7 @@ st.markdown(f"""
 # ─────────────────────────────────────────────
 # TABS
 # ─────────────────────────────────────────────
-tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
+tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12 = st.tabs([
     "📊 Market Overview",
     "🗺️ Map Explorer",
     "👥 Host & Reviews",
@@ -192,6 +243,7 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11 = st.tabs([
     "📐 Statistical Analysis",
     "⚙️ MLOps & Governance",
     "☁️ Architecture & Streaming",
+    "🌍 Cross-City Comparison",
 ])
 
 PLOTLY_THEME = dict(
@@ -597,7 +649,7 @@ with tab4:
 
     with mc1:
         st.markdown('<div class="section-header"><h3>Permutation Feature Importance</h3><span class="section-pill">Top 10</span></div>', unsafe_allow_html=True)
-        df_perm = load_report("reports/permutation_importance.csv")
+        df_perm = load_report(f"reports/permutation_importance_{city_key}.csv")
         if df_perm is not None:
             top10 = df_perm.head(10).sort_values("importance")
             fig_imp = px.bar(
@@ -609,11 +661,11 @@ with tab4:
             fig_imp.update_layout(**PLOTLY_THEME, coloraxis_showscale=False, height=380)
             st.plotly_chart(fig_imp, width="stretch")
         else:
-            st.warning("⚠️ Run `python src/machine_learning.py` to generate importance metrics.")
+            st.warning(f"⚠️ Run `python src/machine_learning.py --city {city_key}` to generate importance metrics.")
 
     with mc2:
         st.markdown('<div class="section-header"><h3>LDA Review Topic Keywords</h3><span class="section-pill">5 Themes</span></div>', unsafe_allow_html=True)
-        df_topics = load_report("reports/nlp_review_topics.csv")
+        df_topics = load_report(f"reports/nlp_review_topics_{city_key}.csv")
         if df_topics is not None:
             topic_colors = {0: "#FF5A5F", 1: "#00A699", 2: "#f7b731", 3: "#3a86ff", 4: "#a855f7"}
             for idx, row in df_topics.iterrows():
@@ -628,14 +680,14 @@ with tab4:
                 </div>
                 """, unsafe_allow_html=True)
         else:
-            st.warning("⚠️ Run `python src/machine_learning.py` to generate LDA topics.")
+            st.warning(f"⚠️ Run `python src/machine_learning.py --city {city_key}` to generate LDA topics.")
 
     st.markdown("---")
     st.markdown('<div class="section-header"><h3>Model Bias Analysis — Prediction Errors by Segment</h3><span class="section-pill">MAE & MAPE</span></div>', unsafe_allow_html=True)
 
     bc1, bc2 = st.columns(2)
     with bc1:
-        df_bias_b = load_report("reports/model_bias_borough.csv")
+        df_bias_b = load_report(f"reports/model_bias_borough_{city_key}.csv")
         if df_bias_b is not None:
             fig_bb = px.bar(
                 df_bias_b.sort_values("mape", ascending=False),
@@ -650,7 +702,7 @@ with tab4:
             st.dataframe(df_bias_b.style.background_gradient(subset=["mape"], cmap="Reds"), width="stretch")
 
     with bc2:
-        df_bias_r = load_report("reports/model_bias_room_type.csv")
+        df_bias_r = load_report(f"reports/model_bias_room_type_{city_key}.csv")
         if df_bias_r is not None:
             fig_br = px.bar(
                 df_bias_r.sort_values("mape", ascending=False),
@@ -668,7 +720,7 @@ with tab4:
     st.markdown("---")
     st.markdown('<div class="section-header"><h3>Feature Correlation Matrix</h3><span class="section-pill">Pearson Correlation</span></div>', unsafe_allow_html=True)
     st.markdown("Pearson correlations across all key numerical predictors. Strong positive correlations (dark red) indicate features that move together; negative correlations (dark blue) move inversely.")
-    df_corr = load_report("reports/correlation_matrix.csv")
+    df_corr = load_report(f"reports/correlation_matrix_{city_key}.csv")
     if df_corr is not None:
         # The CSV has a row-index column
         if df_corr.columns[0] not in ["price", "bedrooms"]:
@@ -701,7 +753,7 @@ with tab4:
     st.markdown('<div class="section-header"><h3>Listing & Host Unsupervised Segmentation</h3><span class="section-pill">K-Means Clustering</span></div>', unsafe_allow_html=True)
     st.markdown("Using K-Means clustering, we segment listings based on coordinates, price, ratings, availability, and host sizes. Hosts are clustered based on portfolio count, average pricing, average reviews, and Superhost ratio. Silhouette scores capture cluster cohesion.")
 
-    clust_metrics_path = "reports/clustering_metrics.json"
+    clust_metrics_path = f"reports/clustering_metrics_{city_key}.json"
     if os.path.exists(clust_metrics_path):
         with open(clust_metrics_path) as _cf:
             _cdata = json.load(_cf)
@@ -737,7 +789,7 @@ with tab4:
             st.markdown(f"##### 👤 Host Segmentation (Silhouette: **{_cdata['hosts']['silhouette_score']:.4f}**)")
             
             # Scatter plot of hosts portfolio vs price
-            _h_assign_path = "reports/host_clustering_assignments.csv"
+            _h_assign_path = f"reports/host_clustering_assignments_{city_key}.csv"
             if os.path.exists(_h_assign_path):
                 _h_assign_df = pd.read_csv(_h_assign_path)
                 _h_assign_df["Cluster"] = _h_assign_df["cluster_id"].map({
@@ -760,7 +812,7 @@ with tab4:
             _h_prof_df = pd.DataFrame(_cdata["hosts"]["profiles"])
             st.dataframe(_h_prof_df, width="stretch")
     else:
-        st.warning("⚠️ Clustering metrics not found. Run `python src/clustering.py` first.")
+        st.warning(f"⚠️ Clustering metrics not found. Run `python src/clustering.py --city {city_key}` first.")
 
 
 # ════════════════════════════════════════════
@@ -779,7 +831,7 @@ with tab5:
     </div>
     """, unsafe_allow_html=True)
 
-    df_forecast = load_report("reports/occupancy_forecast.csv")
+    df_forecast = load_report(f"reports/occupancy_forecast_{city_key}.csv")
     if df_forecast is not None:
         df_forecast["date"] = pd.to_datetime(df_forecast["date"])
         df_forecast["occ_pct"] = df_forecast["forecast_occupancy"] * 100
@@ -842,7 +894,7 @@ with tab5:
             </div>
             """, unsafe_allow_html=True)
     else:
-        st.warning("⚠️ Forecast artifacts not found. Run `python src/forecasting.py` to generate.")
+        st.warning(f"⚠️ Forecast artifacts not found. Run `python src/forecasting.py --city {city_key}` to generate.")
 
 # ════════════════════════════════════════════
 # TAB 6 — PIPELINE TELEMETRY
@@ -860,7 +912,7 @@ with tab6:
     </div>
     """, unsafe_allow_html=True)
 
-    metadata = load_metadata()
+    metadata = load_metadata(city_key)
     if metadata:
         status_color = "#3fb950" if metadata.get("status") == "SUCCESS" else "#f85149"
         st.markdown(f"""
@@ -925,7 +977,7 @@ with tab6:
 
     st.markdown("---")
     st.markdown('<div class="section-header"><h3>Data Profiling Summary</h3></div>', unsafe_allow_html=True)
-    df_profiling = load_report("reports/data_profiling_summary.csv")
+    df_profiling = load_report(f"reports/data_profiling_summary_{city_key}.csv")
     if df_profiling is not None:
         num_cols = df_profiling.select_dtypes("number").columns.tolist()
         st.dataframe(
@@ -997,7 +1049,7 @@ with tab7:
 
         if run_clicked:
             try:
-                conn = duckdb.connect("data/processed/hostlens.db")
+                conn = duckdb.connect(city_cfg["db"], read_only=True)
                 result_df = conn.execute(user_query).fetchdf()
                 conn.close()
                 st.success(f"✅ Query returned **{len(result_df):,} rows** · {len(result_df.columns)} columns")
@@ -1191,7 +1243,7 @@ with tab9:
     st.markdown('<div class="section-header"><h3>Hypothesis Test Results — H1 to H5</h3><span class="section-pill">With Bonferroni Correction</span></div>', unsafe_allow_html=True)
     st.markdown("Each hypothesis is tested against its appropriate statistical test. **Bonferroni correction** is applied across H1–H5 (5 tests), so the corrected significance threshold is α/5 = **0.01**. Effect sizes (Cohen's d, Eta², Cramér's V) indicate practical — not just statistical — significance.")
 
-    stat_path = "reports/statistical_findings.json"
+    stat_path = f"reports/statistical_findings_{city_key}.json"
     if os.path.exists(stat_path):
         with open(stat_path) as _f:
             _findings = json.load(_f)
@@ -1933,3 +1985,173 @@ dbt test --profiles-dir .
 dbt docs generate --profiles-dir .
 dbt docs serve --profiles-dir .   # Opens at http://localhost:8080
 """, language="powershell")
+
+# ════════════════════════════════════════════
+# TAB 12 — CROSS-CITY COMPARISON
+# ════════════════════════════════════════════
+with tab12:
+    st.markdown("""
+    <div class="section-header">
+        <span style="font-size:22px">🌍</span>
+        <h3>Multi-Market Intelligence — NYC vs Boston vs San Francisco</h3>
+        <span class="section-pill">3 Markets</span>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("""
+    <div style="color:#8b949e;font-size:14px;margin-bottom:24px;">
+    Real datasets downloaded from <b style="color:#e6edf3">Inside Airbnb</b> for all three markets.
+    Compare pricing dynamics, host quality, and occupancy patterns across US short-term rental markets.
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Load all three city datasets
+    @st.cache_data(ttl=600)
+    def load_all_cities():
+        results = {}
+        for city_name, cfg in CITY_CONFIG.items():
+            try:
+                city_df = load_city_data(cfg["key"])
+                results[city_name] = {
+                    "df": city_df,
+                    "key": cfg["key"],
+                    "flag": cfg["flag"],
+                    "listings": len(city_df),
+                    "avg_price": round(city_df["price"].mean(), 2),
+                    "median_price": round(city_df["price"].median(), 2),
+                    "superhost_pct": round((city_df["host_is_superhost"] == "t").mean() * 100, 1),
+                    "avg_rating": round(city_df["review_scores_rating"].mean(), 2),
+                    "avg_reviews": round(city_df["number_of_reviews"].mean(), 1),
+                    "avg_occupancy": round(city_df["occupancy_rate"].mean() * 100, 1) if "occupancy_rate" in city_df.columns else 0.0,
+                    "avg_annual_rev": round(city_df["estimated_annual_revenue"].mean(), 0) if "estimated_annual_revenue" in city_df.columns else 0.0,
+                    "entire_home_pct": round((city_df["room_type"] == "Entire Home/Apt").mean() * 100, 1),
+                }
+            except Exception:
+                pass
+        return results
+
+    all_cities = load_all_cities()
+
+    if not all_cities:
+        st.warning("No city data found. Run the pipeline for at least one city first.")
+    else:
+        # ─── KPI Row
+        kpi_cols = st.columns(len(all_cities))
+        metrics = [
+            ("Total Listings", "listings", "{:,}"),
+            ("Avg Price/Night", "avg_price", "${:.0f}"),
+            ("Superhost Rate", "superhost_pct", "{:.1f}%"),
+            ("Avg Rating", "avg_rating", "{:.2f}"),
+            ("Avg Occupancy", "avg_occupancy", "{:.1f}%"),
+            ("Est. Annual Revenue", "avg_annual_rev", "${:,.0f}"),
+        ]
+
+        for i, (city_name, data) in enumerate(all_cities.items()):
+            with kpi_cols[i]:
+                st.markdown(f"""
+                <div class="glass-card" style="text-align:center;padding:20px;">
+                    <div style="font-size:36px;margin-bottom:8px">{data['flag']}</div>
+                    <div style="font-size:16px;font-weight:800;color:#e6edf3;margin-bottom:16px">{city_name}</div>
+                    {''.join(f'''
+                    <div style="margin-bottom:10px;">
+                        <div style="font-size:11px;color:#6e7681;text-transform:uppercase;letter-spacing:0.07em">{label}</div>
+                        <div style="font-size:18px;font-weight:700;color:#FF5A5F">{fmt.format(data[key])}</div>
+                    </div>''' for label, key, fmt in metrics if key in data)}
+                </div>
+                """, unsafe_allow_html=True)
+
+        st.markdown("---")
+
+        # ─── Comparative Charts
+        ch1, ch2 = st.columns(2)
+
+        with ch1:
+            st.markdown("#### 💰 Average vs Median Nightly Price")
+            price_data = []
+            for city_name, data in all_cities.items():
+                price_data.append({"City": city_name, "Metric": "Avg Price", "Value": data["avg_price"]})
+                price_data.append({"City": city_name, "Metric": "Median Price", "Value": data["median_price"]})
+            price_df_comp = pd.DataFrame(price_data)
+            fig_price = px.bar(
+                price_df_comp, x="City", y="Value", color="Metric", barmode="group",
+                color_discrete_map={"Avg Price": "#FF5A5F", "Median Price": "#00A699"},
+                labels={"Value": "Price (USD/night)"}
+            )
+            fig_price.update_layout(**PLOTLY_THEME, showlegend=True, height=350)
+            st.plotly_chart(fig_price, use_container_width=True)
+
+        with ch2:
+            st.markdown("#### ⭐ Rating & Superhost Rate by Market")
+            sh_data = [
+                {"City": cn, "Superhost %": d["superhost_pct"], "Avg Rating": d["avg_rating"]}
+                for cn, d in all_cities.items()
+            ]
+            sh_df = pd.DataFrame(sh_data)
+            fig_sh = px.bar(
+                sh_df, x="City", y="Superhost %", color="City",
+                color_discrete_sequence=BRAND_COLORS,
+                text_auto=".1f",
+            )
+            fig_sh.update_traces(textposition="outside")
+            fig_sh.update_layout(**PLOTLY_THEME, showlegend=False, height=350, yaxis_title="Superhost Rate (%)")
+            st.plotly_chart(fig_sh, use_container_width=True)
+
+        ch3, ch4 = st.columns(2)
+
+        with ch3:
+            st.markdown("#### 🏠 Room Type Distribution")
+            rt_rows = []
+            for city_name, data in all_cities.items():
+                city_df = data["df"]
+                for rt, count in city_df["room_type"].value_counts().items():
+                    rt_rows.append({"City": city_name, "Room Type": rt, "Count": count})
+            rt_df = pd.DataFrame(rt_rows)
+            fig_rt = px.bar(
+                rt_df, x="Room Type", y="Count", color="City", barmode="group",
+                color_discrete_sequence=BRAND_COLORS,
+            )
+            fig_rt.update_layout(**PLOTLY_THEME, showlegend=True, height=350)
+            st.plotly_chart(fig_rt, use_container_width=True)
+
+        with ch4:
+            st.markdown("#### 📅 Occupancy & Revenue")
+            occ_data = [
+                {"City": cn, "Occupancy Rate (%)": d["avg_occupancy"], "Est. Annual Revenue ($)": d["avg_annual_rev"]}
+                for cn, d in all_cities.items()
+            ]
+            occ_df = pd.DataFrame(occ_data)
+            fig_occ = px.bar(
+                occ_df, x="City", y="Occupancy Rate (%)", color="City",
+                color_discrete_sequence=BRAND_COLORS,
+                text_auto=".1f",
+            )
+            fig_occ.update_traces(textposition="outside")
+            fig_occ.update_layout(**PLOTLY_THEME, showlegend=False, height=350)
+            st.plotly_chart(fig_occ, use_container_width=True)
+
+        st.markdown("---")
+        st.markdown("#### 📊 Full Comparison Summary")
+
+        summary_rows = []
+        for city_name, data in all_cities.items():
+            summary_rows.append({
+                "Market": f"{data['flag']} {city_name}",
+                "Listings": f"{data['listings']:,}",
+                "Avg Price": f"${data['avg_price']:.0f}",
+                "Median Price": f"${data['median_price']:.0f}",
+                "Superhost %": f"{data['superhost_pct']:.1f}%",
+                "Avg Rating": f"{data['avg_rating']:.2f}",
+                "Avg Occupancy": f"{data['avg_occupancy']:.1f}%",
+                "Est. Annual Rev.": f"${data['avg_annual_rev']:,.0f}",
+                "Entire Home %": f"{data['entire_home_pct']:.1f}%",
+            })
+        summary_df = pd.DataFrame(summary_rows)
+        st.dataframe(summary_df, use_container_width=True, hide_index=True)
+
+        st.info("""
+        **Data Sources**: All datasets sourced directly from [Inside Airbnb](http://insideairbnb.com/get-the-data/) —
+        NYC (Sep 2024), Boston (Jun 2026), San Francisco (Jun 2026).
+        Each city runs through the same ETL pipeline, ML models, and statistical tests for a fully comparable analysis.
+        """)
+
+

@@ -6,12 +6,12 @@ from sklearn.cluster import KMeans
 from sklearn.preprocessing import StandardScaler
 from sklearn.metrics import silhouette_score
 
-def run_clustering():
-    print("Starting Listing & Host Segmentation...")
+def run_clustering(city="nyc"):
+    print(f"Starting Listing & Host Segmentation for {city.upper()}...")
     os.makedirs("reports", exist_ok=True)
     
     # Load dataset
-    df = pd.read_csv("data/processed/enriched_listings.csv")
+    df = pd.read_csv(f"data/processed/enriched_listings_{city}.csv")
     
     # ─────────────────────────────────────────────
     # 1. LISTING SEGMENTATION
@@ -41,24 +41,29 @@ def run_clustering():
     
     # Compute Silhouette Score
     sample_size = min(5000, len(list_df))
-    sample_df = list_df.sample(n=sample_size, random_state=42)
-    sample_scaled = scaler.transform(sample_df[feat_cols])
-    sil_score_list = float(silhouette_score(sample_scaled, sample_df["cluster_id"]))
+    if sample_size > 0:
+        sample_df = list_df.sample(n=sample_size, random_state=42)
+        sample_scaled = scaler.transform(sample_df[feat_cols])
+        sil_score_list = float(silhouette_score(sample_scaled, sample_df["cluster_id"]))
+    else:
+        sil_score_list = 0.0
     print(f"Listing Silhouette Score (N={sample_size}): {sil_score_list:.4f}")
     
     # Profile Listing Clusters
     list_profiles = []
     for cid in range(k_listings):
         grp = list_df[list_df["cluster_id"] == cid]
-        avg_price = float(grp["price"].mean())
-        avg_rating = float(grp["review_scores_rating"].mean())
-        avg_avail = float(grp["availability_365"].mean())
-        avg_host_count = float(grp["calculated_host_listings_count"].mean())
+        avg_price = float(grp["price"].mean()) if not grp.empty else 0.0
+        avg_rating = float(grp["review_scores_rating"].mean()) if not grp.empty else 0.0
+        avg_avail = float(grp["availability_365"].mean()) if not grp.empty else 0.0
+        avg_host_count = float(grp["calculated_host_listings_count"].mean()) if not grp.empty else 0.0
         top_borough = str(grp["neighbourhood_group_cleansed"].mode().iloc[0] if not grp["neighbourhood_group_cleansed"].empty else "Unknown")
         count = int(len(grp))
         
         # Heuristically assign profile label
-        if avg_price > df["price"].quantile(0.85):
+        if count == 0:
+            label = "Standard Urban Hubs"
+        elif avg_price > df["price"].quantile(0.85):
             label = "Premium Listings"
         elif avg_host_count > 10.0:
             label = "Corporate Multi-Listings"
@@ -84,8 +89,11 @@ def run_clustering():
     df = df.drop(columns=["listing_cluster"], errors="ignore")
     df = df.merge(list_df[["id", "cluster_id"]].rename(columns={"cluster_id": "listing_cluster"}), on="id", how="left")
     df["listing_cluster"] = df["listing_cluster"].fillna(-1).astype(int)
-    df.to_csv("data/processed/enriched_listings.csv", index=False)
-    print("Saved listing cluster assignments to data/processed/enriched_listings.csv")
+    
+    df.to_csv(f"data/processed/enriched_listings_{city}.csv", index=False)
+    if city == "nyc":
+        df.to_csv("data/processed/enriched_listings.csv", index=False)
+    print(f"Saved listing cluster assignments to data/processed/enriched_listings_{city}.csv")
     
     # ─────────────────────────────────────────────
     # 2. HOST SEGMENTATION
@@ -110,23 +118,28 @@ def run_clustering():
     
     # Compute Host Silhouette Score
     host_sample = min(5000, len(host_df))
-    host_sample_df = host_df.sample(n=host_sample, random_state=42)
-    host_sample_scaled = scaler_host.transform(host_sample_df[host_feats])
-    sil_score_host = float(silhouette_score(host_sample_scaled, host_sample_df["cluster_id"]))
+    if host_sample > 0:
+        host_sample_df = host_df.sample(n=host_sample, random_state=42)
+        host_sample_scaled = scaler_host.transform(host_sample_df[host_feats])
+        sil_score_host = float(silhouette_score(host_sample_scaled, host_sample_df["cluster_id"]))
+    else:
+        sil_score_host = 0.0
     print(f"Host Silhouette Score (N={host_sample}): {sil_score_host:.4f}")
     
     # Profile Host Clusters
     host_profiles = []
     for cid in range(k_hosts):
         grp = host_df[host_df["cluster_id"] == cid]
-        avg_list_count = float(grp["listings_count"].mean())
-        avg_p = float(grp["avg_price"].mean())
-        avg_r = float(grp["avg_rating"].mean())
-        avg_sh = float(grp["superhost_ratio"].mean())
+        avg_list_count = float(grp["listings_count"].mean()) if not grp.empty else 0.0
+        avg_p = float(grp["avg_price"].mean()) if not grp.empty else 0.0
+        avg_r = float(grp["avg_rating"].mean()) if not grp.empty else 0.0
+        avg_sh = float(grp["superhost_ratio"].mean()) if not grp.empty else 0.0
         count = int(len(grp))
         
         # Label hosts
-        if avg_list_count > 5.0:
+        if count == 0:
+            label = "Casual Hosts"
+        elif avg_list_count > 5.0:
             label = "Commercial Operators"
         elif avg_sh > 0.5:
             label = "High-Quality Superhosts"
@@ -159,14 +172,23 @@ def run_clustering():
         }
     }
     
-    with open("reports/clustering_metrics.json", "w") as f:
+    with open(f"reports/clustering_metrics_{city}.json", "w") as f:
         json.dump(output_metrics, f, indent=4)
-    print("Saved clustering metrics and profiles to reports/clustering_metrics.json")
+    if city == "nyc":
+        with open("reports/clustering_metrics.json", "w") as f:
+            json.dump(output_metrics, f, indent=4)
+    print(f"Saved clustering metrics and profiles to reports/clustering_metrics_{city}.json")
     
     # Save a CSV with host assignments for mapping/plotting in dashboard
-    host_df.to_csv("reports/host_clustering_assignments.csv", index=False)
-    print("Saved host cluster assignments to reports/host_clustering_assignments.csv")
-    print("Clustering complete!")
+    host_df.to_csv(f"reports/host_clustering_assignments_{city}.csv", index=False)
+    if city == "nyc":
+        host_df.to_csv("reports/host_clustering_assignments.csv", index=False)
+    print(f"Saved host cluster assignments to reports/host_clustering_assignments_{city}.csv")
+    print(f"Clustering complete for {city.upper()}!")
 
 if __name__ == "__main__":
-    run_clustering()
+    import argparse
+    parser = argparse.ArgumentParser(description="Run clustering for a specific city.")
+    parser.add_argument("--city", type=str, default="nyc", choices=["nyc", "boston", "sf"])
+    args = parser.parse_args()
+    run_clustering(args.city)
