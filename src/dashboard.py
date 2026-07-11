@@ -36,8 +36,8 @@ st.markdown("""
   section[data-testid="stSidebar"] .stSlider label,
   section[data-testid="stSidebar"] p { color: var(--text-color) !important; font-size: 11px; font-weight: 600; opacity: 0.7; letter-spacing: 0.05em; text-transform: uppercase; }
 
-  .stTabs [data-baseweb="tab-list"] { background: var(--secondary-background-color); border-radius: 12px; padding: 6px; border: 1px solid rgba(128,128,128,0.15); backdrop-filter: blur(10px); flex-wrap: wrap !important; height: auto !important; display: flex !important; gap: 4px; }
-  .stTabs [data-baseweb="tab"] { color: var(--text-color) !important; font-weight: 500; font-size: 13px; border-radius: 8px; padding: 8px 18px; transition: all 0.2s ease; opacity: 0.75; white-space: normal !important; }
+  .stTabs [data-baseweb="tab-list"] { background: var(--secondary-background-color); border-radius: 12px; padding: 4px; border: 1px solid rgba(128,128,128,0.15); backdrop-filter: blur(10px); }
+  .stTabs [data-baseweb="tab"] { color: var(--text-color) !important; font-weight: 500; font-size: 13px; border-radius: 8px; padding: 8px 18px; transition: all 0.2s ease; opacity: 0.75; }
   .stTabs [aria-selected="true"] { background: linear-gradient(135deg, #FF5A5F, #FC642D) !important; color: white !important; box-shadow: 0 4px 15px rgba(255,90,95,0.35); opacity: 1.0 !important; }
 
   .glass-card { background: var(--background-color); border: 1px solid rgba(128,128,128,0.25); border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); transition: all 0.3s ease; margin-bottom: 16px; }
