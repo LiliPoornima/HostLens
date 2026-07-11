@@ -1,0 +1,79 @@
+{
+    "listings": {
+        "silhouette_score": 0.20148498658342895,
+        "profiles": [
+            {
+                "cluster_id": 0,
+                "profile_label": "Corporate Multi-Listings",
+                "size": 321,
+                "avg_price": 239.23,
+                "avg_rating": 4.81,
+                "avg_availability": 203.9,
+                "avg_host_listings_count": 194.8,
+                "primary_borough": "Boston"
+            },
+            {
+                "cluster_id": 1,
+                "profile_label": "Corporate Multi-Listings",
+                "size": 1206,
+                "avg_price": 231.07,
+                "avg_rating": 4.82,
+                "avg_availability": 262.7,
+                "avg_host_listings_count": 10.6,
+                "primary_borough": "Boston"
+            },
+            {
+                "cluster_id": 2,
+                "profile_label": "Corporate Multi-Listings",
+                "size": 1159,
+                "avg_price": 319.1,
+                "avg_rating": 4.78,
+                "avg_availability": 66.0,
+                "avg_host_listings_count": 14.7,
+                "primary_borough": "Boston"
+            },
+            {
+                "cluster_id": 3,
+                "profile_label": "Corporate Multi-Listings",
+                "size": 1692,
+                "avg_price": 447.44,
+                "avg_rating": 4.71,
+                "avg_availability": 288.9,
+                "avg_host_listings_count": 23.3,
+                "primary_borough": "Boston"
+            }
+        ]
+    },
+    "hosts": {
+        "silhouette_score": 0.4856020025742417,
+        "profiles": [
+            {
+                "cluster_id": 0,
+                "profile_label": "Casual Hosts",
+                "size": 799,
+                "avg_listings_count": 2.1,
+                "avg_price": 327.26,
+                "avg_rating": 4.8,
+                "superhost_ratio": 0.0
+            },
+            {
+                "cluster_id": 1,
+                "profile_label": "High-Quality Superhosts",
+                "size": 577,
+                "avg_listings_count": 2.5,
+                "avg_price": 429.63,
+                "avg_rating": 4.89,
+                "superhost_ratio": 1.0
+            },
+            {
+                "cluster_id": 2,
+                "profile_label": "Commercial Operators",
+                "size": 30,
+                "avg_listings_count": 43.6,
+                "avg_price": 317.84,
+                "avg_rating": 4.15,
+                "superhost_ratio": 0.17
+            }
+        ]
+    }
+}

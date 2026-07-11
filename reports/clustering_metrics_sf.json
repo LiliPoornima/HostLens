@@ -1,0 +1,79 @@
+{
+    "listings": {
+        "silhouette_score": 0.23196749986391052,
+        "profiles": [
+            {
+                "cluster_id": 0,
+                "profile_label": "Corporate Multi-Listings",
+                "size": 2535,
+                "avg_price": 332.98,
+                "avg_rating": 4.89,
+                "avg_availability": 52.5,
+                "avg_host_listings_count": 16.0,
+                "primary_borough": "Sf"
+            },
+            {
+                "cluster_id": 1,
+                "profile_label": "Standard Urban Hubs",
+                "size": 2288,
+                "avg_price": 299.12,
+                "avg_rating": 4.84,
+                "avg_availability": 201.6,
+                "avg_host_listings_count": 3.5,
+                "primary_borough": "Sf"
+            },
+            {
+                "cluster_id": 2,
+                "profile_label": "Corporate Multi-Listings",
+                "size": 2508,
+                "avg_price": 470.39,
+                "avg_rating": 4.76,
+                "avg_availability": 293.9,
+                "avg_host_listings_count": 24.8,
+                "primary_borough": "Sf"
+            },
+            {
+                "cluster_id": 3,
+                "profile_label": "Premium Listings",
+                "size": 1,
+                "avg_price": 99999.0,
+                "avg_rating": 4.92,
+                "avg_availability": 364.0,
+                "avg_host_listings_count": 3.0,
+                "primary_borough": "Sf"
+            }
+        ]
+    },
+    "hosts": {
+        "silhouette_score": 0.5565198647898765,
+        "profiles": [
+            {
+                "cluster_id": 0,
+                "profile_label": "High-Quality Superhosts",
+                "size": 1682,
+                "avg_listings_count": 2.0,
+                "avg_price": 369.38,
+                "avg_rating": 4.91,
+                "superhost_ratio": 1.0
+            },
+            {
+                "cluster_id": 1,
+                "profile_label": "Casual Hosts",
+                "size": 1815,
+                "avg_listings_count": 2.2,
+                "avg_price": 387.2,
+                "avg_rating": 4.82,
+                "superhost_ratio": 0.0
+            },
+            {
+                "cluster_id": 2,
+                "profile_label": "Casual Hosts",
+                "size": 2,
+                "avg_listings_count": 2.5,
+                "avg_price": 25352.92,
+                "avg_rating": 4.71,
+                "superhost_ratio": 0.5
+            }
+        ]
+    }
+}
