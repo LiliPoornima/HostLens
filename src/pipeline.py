@@ -20,10 +20,10 @@ logging.basicConfig(
 )
 logger = logging.getLogger("HostLensETL")
 
-def run_pipeline():
-    logger.info("Starting HostLens end-to-end pipeline...")
+def run_pipeline(city="nyc"):
+    logger.info(f"Starting HostLens end-to-end pipeline for {city.upper()}...")
 
-    raw_path = "data/raw"
+    raw_path = "data/raw" if city == "nyc" else f"data/raw/{city}"
     processed_path = "data/processed"
     os.makedirs(processed_path, exist_ok=True)
 
@@ -120,6 +120,8 @@ def run_pipeline():
 
     # Normalize categorical columns
     logger.info("Normalizing room and property types...")
+    if city != "nyc":
+        listings["neighbourhood_group_cleansed"] = listings["neighbourhood_group_cleansed"].fillna(city.upper()).replace("nan", city.upper())
     listings["room_type"] = listings["room_type"].astype(str).str.strip().str.title()
     listings["property_type"] = listings["property_type"].astype(str).str.strip().str.title()
     listings["neighbourhood_cleansed"] = listings["neighbourhood_cleansed"].astype(str).str.strip().str.title()
@@ -184,14 +186,19 @@ def run_pipeline():
     listings = listings.merge(neigh_agg, on="neighbourhood_cleansed", how="left")
     
     # Save cleaned and enriched outputs
-    listings.to_csv(f"{processed_path}/listings_cleaned.csv", index=False)
-    listings.to_csv(f"{processed_path}/enriched_listings.csv", index=False)
-    reviews.to_csv(f"{processed_path}/reviews_cleaned.csv", index=False)
+    listings.to_csv(f"{processed_path}/listings_cleaned_{city}.csv", index=False)
+    listings.to_csv(f"{processed_path}/enriched_listings_{city}.csv", index=False)
+    reviews.to_csv(f"{processed_path}/reviews_cleaned_{city}.csv", index=False)
+    if city == "nyc":
+        listings.to_csv(f"{processed_path}/listings_cleaned.csv", index=False)
+        listings.to_csv(f"{processed_path}/enriched_listings.csv", index=False)
+        reviews.to_csv(f"{processed_path}/reviews_cleaned.csv", index=False)
     logger.info("Saved cleaned and enriched CSV files.")
 
     # 5. Data Modeling and DuckDB Load
     logger.info("Step 5: Setting up DuckDB and loading tables...")
-    db_file = f"{processed_path}/hostlens.db"
+    db_file = f"{processed_path}/hostlens_{city}.db"
+    db_file_compat = f"{processed_path}/hostlens.db"
     
     # If file exists, remove to reload schema fresh
     if os.path.exists(db_file):
@@ -286,18 +293,38 @@ def run_pipeline():
     conn.execute("INSERT INTO metadata_log SELECT * FROM df_meta_pd")
     logger.info("Successfully inserted execution telemetry into DuckDB metadata_log.")
 
+    # Close connection FIRST to release Windows file lock before any copy operations
     conn.close()
+
+    # Copy database file for nyc backwards compatibility
+    if city == "nyc":
+        import shutil
+        try:
+            shutil.copyfile(db_file, db_file_compat)
+            logger.info("Copied database to hostlens.db for compatibility.")
+        except PermissionError as e:
+            logger.warning(f"Could not copy to hostlens.db (file may be in use): {e}")
     
     # 6. Run Listing & Host Clustering
     try:
         logger.info("Step 6: Running advanced listing & host clustering...")
         sys.path.append(os.path.dirname(__file__))
         from clustering import run_clustering
-        run_clustering()
+        run_clustering(city=city)
     except Exception as e:
         logger.error(f"Error running clustering: {e}")
 
-    logger.info("ETL pipeline execution complete! Success.")
+    logger.info(f"ETL pipeline execution complete for {city.upper()}! Success.")
 
 if __name__ == "__main__":
-    run_pipeline()
+    import argparse
+    parser = argparse.ArgumentParser(description="Run HostLens pipeline for a specific city.")
+    parser.add_argument(
+        "--city",
+        type=str,
+        default="nyc",
+        choices=["nyc", "boston", "sf"],
+        help="City to process (default: nyc)"
+    )
+    args = parser.parse_args()
+    run_pipeline(args.city)

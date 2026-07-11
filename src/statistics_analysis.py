@@ -7,13 +7,14 @@ import statsmodels.api as sm
 from statsmodels.formula.api import ols
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
-def run_statistical_analysis():
-    print("Starting statistical analysis...")
+def run_statistical_analysis(city="nyc"):
+    print(f"Starting statistical analysis for {city.upper()}...")
     os.makedirs("reports", exist_ok=True)
     
     # Load enriched data
-    df = pd.read_csv("data/processed/enriched_listings.csv")
-    calendar = pd.read_csv("data/raw/calendar.csv")
+    df = pd.read_csv(f"data/processed/enriched_listings_{city}.csv")
+    raw_path = "data/raw" if city == "nyc" else f"data/raw/{city}"
+    calendar = pd.read_csv(f"{raw_path}/calendar.csv")
     calendar["date"] = pd.to_datetime(calendar["date"])
     
     findings = {}
@@ -82,8 +83,9 @@ def run_statistical_analysis():
         "significant": bool(p_val_h3 < 0.05)
     }
 
-    # H4: Neighbourhood average prices differ significantly (ANOVA across neighbourhood groups)
-    groups = df.groupby("neighbourhood_group_cleansed")["price"].apply(list)
+    # H4: Neighbourhood average prices differ significantly (ANOVA across neighbourhood groups/neighborhoods)
+    group_col = "neighbourhood_group_cleansed" if df["neighbourhood_group_cleansed"].nunique() > 1 else "neighbourhood_cleansed"
+    groups = df.groupby(group_col)["price"].apply(list)
     f_stat, p_val_h4 = stats.f_oneway(*groups)
     
     # Calculate eta-squared (effect size)
@@ -129,22 +131,28 @@ def run_statistical_analysis():
     num_cols = ["price", "bedrooms", "beds", "number_of_reviews", "review_scores_rating", 
                 "reviews_per_month", "host_tenure_years", "occupancy_rate", "estimated_annual_revenue"]
     corr_matrix = df[num_cols].corr()
-    corr_matrix.to_csv("reports/correlation_matrix.csv")
+    corr_matrix.to_csv(f"reports/correlation_matrix_{city}.csv")
+    if city == "nyc":
+        corr_matrix.to_csv("reports/correlation_matrix.csv")
     
     # Regression analysis (OLS) to identify price drivers
     # Prepare categories and dummy variables
     reg_df = df[["price", "bedrooms", "beds", "room_type", "neighbourhood_group_cleansed", 
-                 "review_scores_rating", "host_is_superhost"]].dropna()
+                 "neighbourhood_cleansed", "review_scores_rating", "host_is_superhost"]].dropna()
     reg_df["log_price"] = np.log1p(reg_df["price"])
     reg_df["host_is_superhost"] = reg_df["host_is_superhost"].map({"t": 1, "f": 0}).fillna(0)
     
     # Define OLS model
-    formula = "log_price ~ bedrooms + beds + C(room_type) + C(neighbourhood_group_cleansed) + review_scores_rating + host_is_superhost"
+    group_col = "neighbourhood_group_cleansed" if reg_df["neighbourhood_group_cleansed"].nunique() > 1 else "neighbourhood_cleansed"
+    formula = f"log_price ~ bedrooms + beds + C(room_type) + C({group_col}) + review_scores_rating + host_is_superhost"
     model = ols(formula, data=reg_df).fit()
     
     # Save regression summary as text file
-    with open("reports/ols_regression_summary.txt", "w") as f:
+    with open(f"reports/ols_regression_summary_{city}.txt", "w") as f:
         f.write(model.summary().as_text())
+    if city == "nyc":
+        with open("reports/ols_regression_summary.txt", "w") as f:
+            f.write(model.summary().as_text())
     
     # Compute VIF to check multicollinearity
     # Select variables from regression design matrix
@@ -155,16 +163,21 @@ def run_statistical_analysis():
     vif_data = pd.DataFrame()
     vif_data["feature"] = X_variables.columns
     vif_data["VIF"] = [variance_inflation_factor(X_variables.values, i) for i in range(len(X_variables.columns))]
-    vif_data.to_csv("reports/vif_report.csv", index=False)
+    vif_data.to_csv(f"reports/vif_report_{city}.csv", index=False)
+    if city == "nyc":
+        vif_data.to_csv("reports/vif_report.csv", index=False)
 
     # Save JSON findings
-    with open("reports/statistical_findings.json", "w") as f:
+    with open(f"reports/statistical_findings_{city}.json", "w") as f:
         json.dump(findings, f, indent=4)
+    if city == "nyc":
+        with open("reports/statistical_findings.json", "w") as f:
+            json.dump(findings, f, indent=4)
         
     # Generate reports/hypothesis_results.md
-    with open("reports/hypothesis_results.md", "w", encoding="utf-8") as f:
-        f.write("# Statistical Hypothesis Testing Results\n\n")
-        f.write("This file summarizes the results of the 5 key business hypotheses tested on the NYC Airbnb dataset.\n\n")
+    with open(f"reports/hypothesis_results_{city}.md", "w", encoding="utf-8") as f:
+        f.write(f"# Statistical Hypothesis Testing Results for {city.upper()}\n\n")
+        f.write(f"This file summarizes the results of the 5 key business hypotheses tested on the {city.upper()} Airbnb dataset.\n\n")
         f.write("| Hypothesis | Test Type | Metric / Mean Comparison | Test Statistic | P-Value | Effect Size | Result |\n")
         f.write("| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n")
         
@@ -184,9 +197,17 @@ def run_statistical_analysis():
         f.write(f"| **H5: Weekend Occupancy Rate** | {h5['test']} | Weekend Occupancy: {h5['weekend_occupancy_rate']:.1%} vs Weekday: {h5['weekday_occupancy_rate']:.1%} | Chi2 = {h5['chi2_statistic']:.3f} | {h5['p_value']:.2e} | Cramer's V = {h5['cramers_v']:.4f} | {'REJECT H0 (Significant)' if h5['significant'] else 'FAIL TO REJECT H0'} |\n")
         
         f.write("\nNote: Bonferroni correction adjusted significance threshold is α/5 = 0.01.\n")
+    
+    if city == "nyc":
+        import shutil
+        shutil.copyfile(f"reports/hypothesis_results_{city}.md", "reports/hypothesis_results.md")
         
-    print("Statistical analysis complete. Reports saved under reports/")
+    print(f"Statistical analysis complete for {city.upper()}. Reports saved under reports/")
 
 if __name__ == "__main__":
-    run_statistical_analysis()
+    import argparse
+    parser = argparse.ArgumentParser(description="Run statistical analysis for a specific city.")
+    parser.add_argument("--city", type=str, default="nyc", choices=["nyc", "boston", "sf"])
+    args = parser.parse_args()
+    run_statistical_analysis(args.city)
 

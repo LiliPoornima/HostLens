@@ -37,13 +37,13 @@ def calculate_lexicon_sentiment(text):
     score = (pos_count - neg_count) / len(words)
     return float(score * 10) # scale to -10 to +10 range
 
-def run_ml_and_sentiment():
-    print("Starting Machine Learning & NLP analysis...")
+def run_ml_and_sentiment(city="nyc"):
+    print(f"Starting Machine Learning & NLP analysis for {city.upper()}...")
     os.makedirs("reports", exist_ok=True)
 
     # Load data
-    df = pd.read_csv("data/processed/enriched_listings.csv")
-    reviews = pd.read_csv("data/processed/reviews_cleaned.csv")
+    df = pd.read_csv(f"data/processed/enriched_listings_{city}.csv")
+    reviews = pd.read_csv(f"data/processed/reviews_cleaned_{city}.csv")
     
     # 1. Sentiment Analysis on Reviews
     print("Running sentiment analysis on reviews...")
@@ -62,9 +62,11 @@ def run_ml_and_sentiment():
     # Impute missing sentiment with 0 (neutral)
     df["avg_review_sentiment"] = df["avg_review_sentiment"].fillna(0.0)
     
-    # Persist the sentiment column back to enriched_listings.csv so the dashboard can read it
-    df.to_csv("data/processed/enriched_listings.csv", index=False)
-    print("Saved sentiment-enriched listings to data/processed/enriched_listings.csv")
+    # Persist the sentiment column back to city-specific enriched_listings file
+    df.to_csv(f"data/processed/enriched_listings_{city}.csv", index=False)
+    if city == "nyc":
+        df.to_csv("data/processed/enriched_listings.csv", index=False)
+    print(f"Saved sentiment-enriched listings to data/processed/enriched_listings_{city}.csv")
     
     # Correlate sentiment with rating scores
     sentiment_rating_corr = float(df[["avg_review_sentiment", "review_scores_rating"]].corr().iloc[0, 1])
@@ -155,18 +157,25 @@ def run_ml_and_sentiment():
     
     # Serialize models
     import joblib
-    joblib.dump(rf_final, "reports/pricing_model.joblib")
-    joblib.dump(scaler, "reports/scaler.joblib")
-    with open("reports/model_features.json", "w") as f:
+    joblib.dump(rf_final, f"reports/pricing_model_{city}.joblib")
+    joblib.dump(scaler, f"reports/scaler_{city}.joblib")
+    with open(f"reports/model_features_{city}.json", "w") as f:
         json.dump(list(X.columns), f)
-    print("Serialized ML model, scaler, and column names to reports/")
+    if city == "nyc":
+        joblib.dump(rf_final, "reports/pricing_model.joblib")
+        joblib.dump(scaler, "reports/scaler.joblib")
+        with open("reports/model_features.json", "w") as f:
+            json.dump(list(X.columns), f)
+    print(f"Serialized ML model, scaler, and column names for {city.upper()} to reports/")
     
     # Feature Importance (Standard Gini Importance)
     feat_importances = pd.DataFrame({
         "feature": X.columns,
         "importance": rf_final.feature_importances_
     }).sort_values(by="importance", ascending=False)
-    feat_importances.to_csv("reports/feature_importances.csv", index=False)
+    feat_importances.to_csv(f"reports/feature_importances_{city}.csv", index=False)
+    if city == "nyc":
+        feat_importances.to_csv("reports/feature_importances.csv", index=False)
 
     # Feature Importance (Permutation Importance for robustness)
     print("Computing permutation feature importance...")
@@ -176,8 +185,10 @@ def run_ml_and_sentiment():
         "importance": perm_importance.importances_mean,
         "importance_std": perm_importance.importances_std
     }).sort_values(by="importance", ascending=False)
-    feat_perm.to_csv("reports/permutation_importance.csv", index=False)
-    print("Saved permutation feature importance to reports/permutation_importance.csv")
+    feat_perm.to_csv(f"reports/permutation_importance_{city}.csv", index=False)
+    if city == "nyc":
+        feat_perm.to_csv("reports/permutation_importance.csv", index=False)
+    print(f"Saved permutation feature importance to reports/permutation_importance_{city}.csv")
 
     # Model Bias Analysis (MAE and MAPE split by borough and room type)
     print("Computing model bias metrics...")
@@ -198,7 +209,9 @@ def run_ml_and_sentiment():
         count=("price", "count")
     ).reset_index()
     borough_bias["mape"] = borough_bias["mape"] * 100
-    borough_bias.to_csv("reports/model_bias_borough.csv", index=False)
+    borough_bias.to_csv(f"reports/model_bias_borough_{city}.csv", index=False)
+    if city == "nyc":
+        borough_bias.to_csv("reports/model_bias_borough.csv", index=False)
 
     room_type_bias = eval_df.groupby("room_type").agg(
         mae=("absolute_error", "mean"),
@@ -206,7 +219,9 @@ def run_ml_and_sentiment():
         count=("price", "count")
     ).reset_index()
     room_type_bias["mape"] = room_type_bias["mape"] * 100
-    room_type_bias.to_csv("reports/model_bias_room_type.csv", index=False)
+    room_type_bias.to_csv(f"reports/model_bias_room_type_{city}.csv", index=False)
+    if city == "nyc":
+        room_type_bias.to_csv("reports/model_bias_room_type.csv", index=False)
     print("Saved model bias breakdowns by geography and operations.")
 
     # NLP Topic Modeling via LDA
@@ -222,7 +237,6 @@ def run_ml_and_sentiment():
     
     feature_names = vectorizer.get_feature_names_out()
     topics_data = []
-    # Assign names to topics for better presentation
     topic_labels = {
         1: "Location & Public Transit",
         2: "Host Hospitality & Communication",
@@ -240,8 +254,10 @@ def run_ml_and_sentiment():
             "top_keywords": ", ".join(top_words)
         })
     df_topics = pd.DataFrame(topics_data)
-    df_topics.to_csv("reports/nlp_review_topics.csv", index=False)
-    print("Saved review topics to reports/nlp_review_topics.csv")
+    df_topics.to_csv(f"reports/nlp_review_topics_{city}.csv", index=False)
+    if city == "nyc":
+        df_topics.to_csv("reports/nlp_review_topics.csv", index=False)
+    print(f"Saved review topics to reports/nlp_review_topics_{city}.csv")
 
     # Save summary report of ML and sentiment findings
     summary = {
@@ -254,10 +270,17 @@ def run_ml_and_sentiment():
         "extracted_review_topics": topics_data
     }
     
-    with open("reports/ml_findings.json", "w") as f:
+    with open(f"reports/ml_findings_{city}.json", "w") as f:
         json.dump(summary, f, indent=4)
+    if city == "nyc":
+        with open("reports/ml_findings.json", "w") as f:
+            json.dump(summary, f, indent=4)
         
-    print("Machine Learning & NLP analysis complete. Output saved.")
+    print(f"Machine Learning & NLP analysis complete for {city.upper()}. Output saved.")
 
 if __name__ == "__main__":
-    run_ml_and_sentiment()
+    import argparse
+    parser = argparse.ArgumentParser(description="Run machine learning for a specific city.")
+    parser.add_argument("--city", type=str, default="nyc", choices=["nyc", "boston", "sf"])
+    args = parser.parse_args()
+    run_ml_and_sentiment(args.city)
