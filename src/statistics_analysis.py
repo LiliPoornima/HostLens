@@ -161,7 +161,32 @@ def run_statistical_analysis():
     with open("reports/statistical_findings.json", "w") as f:
         json.dump(findings, f, indent=4)
         
+    # Generate reports/hypothesis_results.md
+    with open("reports/hypothesis_results.md", "w", encoding="utf-8") as f:
+        f.write("# Statistical Hypothesis Testing Results\n\n")
+        f.write("This file summarizes the results of the 5 key business hypotheses tested on the NYC Airbnb dataset.\n\n")
+        f.write("| Hypothesis | Test Type | Metric / Mean Comparison | Test Statistic | P-Value | Effect Size | Result |\n")
+        f.write("| :--- | :--- | :--- | :--- | :--- | :--- | :--- |\n")
+        
+        h1 = findings["H1"]
+        f.write(f"| **H1: Room Type Price Impact** | {h1['test']} | Entire Home: ${h1['entire_home_mean']:.2f} vs Private Room: ${h1['private_room_mean']:.2f} | t = {h1['t_statistic']:.3f} | {h1['p_value']:.2e} | Cohen's d = {h1['cohens_d']:.3f} | {'REJECT H0 (Significant)' if h1['significant'] else 'FAIL TO REJECT H0'} |\n")
+        
+        h2 = findings["H2"]
+        f.write(f"| **H2: Superhost Ratings Impact** | {h2['test']} | Superhost Rating: {h2['superhost_mean_rating']:.3f} vs Non-Superhost: {h2['non_superhost_mean_rating']:.3f} | t = {h2['t_statistic']:.3f} | {h2['p_value']:.2e} | Cohen's d = {h2['cohens_d']:.3f} | {'REJECT H0 (Significant)' if h2['significant'] else 'FAIL TO REJECT H0'} |\n")
+        
+        h3 = findings["H3"]
+        f.write(f"| **H3: Review Volume Price Impact** | {h3['test']} | >10 Reviews: ${h3['more_reviews_mean_price']:.2f} vs <=10 Reviews: ${h3['fewer_reviews_mean_price']:.2f} | t = {h3['t_statistic']:.3f} | {h3['p_value']:.2e} | Cohen's d = {h3['cohens_d']:.3f} | {'REJECT H0 (Significant)' if h3['significant'] else 'FAIL TO REJECT H0'} |\n")
+        
+        h4 = findings["H4"]
+        f.write(f"| **H4: Borough Pricing Variation** | {h4['test']} | Multi-group mean comparison | F = {h4['f_statistic']:.3f} | {h4['p_value']:.2e} | Eta-squared = {h4['eta_squared']:.4f} | {'REJECT H0 (Significant)' if h4['significant'] else 'FAIL TO REJECT H0'} |\n")
+        
+        h5 = findings["H5"]
+        f.write(f"| **H5: Weekend Occupancy Rate** | {h5['test']} | Weekend Occupancy: {h5['weekend_occupancy_rate']:.1%} vs Weekday: {h5['weekday_occupancy_rate']:.1%} | Chi2 = {h5['chi2_statistic']:.3f} | {h5['p_value']:.2e} | Cramer's V = {h5['cramers_v']:.4f} | {'REJECT H0 (Significant)' if h5['significant'] else 'FAIL TO REJECT H0'} |\n")
+        
+        f.write("\nNote: Bonferroni correction adjusted significance threshold is α/5 = 0.01.\n")
+        
     print("Statistical analysis complete. Reports saved under reports/")
 
 if __name__ == "__main__":
     run_statistical_analysis()
+
