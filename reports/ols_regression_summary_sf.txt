@@ -1,0 +1,66 @@
+                            OLS Regression Results                            
+==============================================================================
+Dep. Variable:              log_price   R-squared:                       0.348
+Model:                            OLS   Adj. R-squared:                  0.344
+Method:                 Least Squares   F-statistic:                     91.59
+Date:                Sat, 11 Jul 2026   Prob (F-statistic):               0.00
+Time:                        22:43:23   Log-Likelihood:                -7258.8
+No. Observations:                7242   AIC:                         1.460e+04
+Df Residuals:                    7199   BIC:                         1.490e+04
+Df Model:                          42                                         
+Covariance Type:            nonrobust                                         
+======================================================================================================================
+                                                         coef    std err          t      P>|t|      [0.025      0.975]
+----------------------------------------------------------------------------------------------------------------------
+Intercept                                              3.3806      0.129     26.139      0.000       3.127       3.634
+C(room_type)[T.Hotel Room]                             0.1992      0.046      4.323      0.000       0.109       0.290
+C(room_type)[T.Private Room]                          -0.3383      0.018    -19.159      0.000      -0.373      -0.304
+C(room_type)[T.Shared Room]                           -0.8735      0.117     -7.467      0.000      -1.103      -0.644
+C(neighbourhood_cleansed)[T.Bernal Heights]            0.2105      0.068      3.083      0.002       0.077       0.344
+C(neighbourhood_cleansed)[T.Castro/Upper Market]       0.4334      0.067      6.517      0.000       0.303       0.564
+C(neighbourhood_cleansed)[T.Chinatown]                 0.4966      0.074      6.711      0.000       0.352       0.642
+C(neighbourhood_cleansed)[T.Crocker Amazon]           -0.0008      0.108     -0.008      0.994      -0.212       0.210
+C(neighbourhood_cleansed)[T.Diamond Heights]           0.2452      0.216      1.135      0.256      -0.178       0.668
+C(neighbourhood_cleansed)[T.Downtown/Civic Center]     0.5230      0.057      9.104      0.000       0.410       0.636
+C(neighbourhood_cleansed)[T.Excelsior]                -0.0661      0.077     -0.864      0.388      -0.216       0.084
+C(neighbourhood_cleansed)[T.Financial District]        0.7814      0.067     11.688      0.000       0.650       0.912
+C(neighbourhood_cleansed)[T.Glen Park]                 0.2980      0.112      2.656      0.008       0.078       0.518
+C(neighbourhood_cleansed)[T.Golden Gate Park]          0.3106      0.386      0.805      0.421      -0.445       1.067
+C(neighbourhood_cleansed)[T.Haight Ashbury]            0.2554      0.069      3.724      0.000       0.121       0.390
+C(neighbourhood_cleansed)[T.Inner Richmond]            0.2088      0.072      2.910      0.004       0.068       0.349
+C(neighbourhood_cleansed)[T.Inner Sunset]              0.2308      0.078      2.958      0.003       0.078       0.384
+C(neighbourhood_cleansed)[T.Lakeshore]                 0.1008      0.103      0.982      0.326      -0.100       0.302
+C(neighbourhood_cleansed)[T.Marina]                    0.4640      0.070      6.628      0.000       0.327       0.601
+C(neighbourhood_cleansed)[T.Mission]                   0.0792      0.062      1.275      0.202      -0.043       0.201
+C(neighbourhood_cleansed)[T.Nob Hill]                  0.1594      0.064      2.486      0.013       0.034       0.285
+C(neighbourhood_cleansed)[T.Noe Valley]                0.3192      0.069      4.618      0.000       0.184       0.455
+C(neighbourhood_cleansed)[T.North Beach]               0.6743      0.068      9.971      0.000       0.542       0.807
+C(neighbourhood_cleansed)[T.Ocean View]               -0.1543      0.083     -1.858      0.063      -0.317       0.008
+C(neighbourhood_cleansed)[T.Outer Mission]             0.1206      0.077      1.556      0.120      -0.031       0.272
+C(neighbourhood_cleansed)[T.Outer Richmond]            0.1328      0.071      1.861      0.063      -0.007       0.273
+C(neighbourhood_cleansed)[T.Outer Sunset]              0.1418      0.065      2.191      0.028       0.015       0.269
+C(neighbourhood_cleansed)[T.Pacific Heights]           0.5451      0.077      7.116      0.000       0.395       0.695
+C(neighbourhood_cleansed)[T.Parkside]                  0.0733      0.078      0.937      0.349      -0.080       0.227
+C(neighbourhood_cleansed)[T.Potrero Hill]              0.3407      0.079      4.309      0.000       0.186       0.496
+C(neighbourhood_cleansed)[T.Presidio]                  1.2693      0.143      8.885      0.000       0.989       1.549
+C(neighbourhood_cleansed)[T.Presidio Heights]          0.4192      0.138      3.032      0.002       0.148       0.690
+C(neighbourhood_cleansed)[T.Russian Hill]              0.6057      0.070      8.664      0.000       0.469       0.743
+C(neighbourhood_cleansed)[T.Seacliff]                  0.5553      0.256      2.172      0.030       0.054       1.056
+C(neighbourhood_cleansed)[T.South Of Market]           0.3413      0.060      5.651      0.000       0.223       0.460
+C(neighbourhood_cleansed)[T.Twin Peaks]                0.3902      0.114      3.413      0.001       0.166       0.614
+C(neighbourhood_cleansed)[T.Visitacion Valley]        -0.0365      0.104     -0.351      0.726      -0.241       0.168
+C(neighbourhood_cleansed)[T.West Of Twin Peaks]        0.2185      0.087      2.500      0.012       0.047       0.390
+C(neighbourhood_cleansed)[T.Western Addition]          0.2894      0.062      4.703      0.000       0.169       0.410
+bedrooms                                               0.1778      0.013     14.033      0.000       0.153       0.203
+beds                                                   0.1503      0.010     15.257      0.000       0.131       0.170
+review_scores_rating                                   0.2839      0.025     11.486      0.000       0.235       0.332
+host_is_superhost                                      0.0549      0.016      3.329      0.001       0.023       0.087
+==============================================================================
+Omnibus:                     1417.055   Durbin-Watson:                   1.572
+Prob(Omnibus):                  0.000   Jarque-Bera (JB):            23721.831
+Skew:                          -0.466   Prob(JB):                         0.00
+Kurtosis:                      11.817   Cond. No.                         284.
+==============================================================================
+
+Notes:
+[1] Standard Errors assume that the covariance matrix of the errors is correctly specified.
