@@ -1,0 +1,179 @@
+version: 2
+
+# ─────────────────────────────────────────────────────────────────────────────
+# SOURCES
+# ─────────────────────────────────────────────────────────────────────────────
+sources:
+  - name: hostlens_raw
+    schema: main
+    description: >
+      Raw DuckDB tables produced by the HostLens ETL pipeline (src/pipeline.py).
+      These tables implement the star schema: fact_listings at the centre with
+      dim_hosts, dim_reviews, dim_neighbourhoods, and dim_property as dimensions.
+    tables:
+      - name: fact_listings
+        description: >
+          Central fact table containing one row per active Airbnb listing.
+          Includes pricing, availability, review scores, and
+          enrichment columns added by the pipeline.
+        columns:
+          - name: listing_id
+            description: Unique Airbnb listing ID (primary key)
+            tests: [not_null, unique]
+          - name: price
+            description: Nightly price in USD (post-cleaning, > $0)
+            tests: [not_null]
+
+      - name: dim_hosts
+        description: Host dimension table with profile attributes and response metrics.
+        columns:
+          - name: host_id
+            description: Unique Airbnb host ID (primary key)
+            tests: [not_null, unique]
+
+      - name: dim_reviews
+        description: >
+          Reviews dimension table with one row per review.
+          Reviews are linked to listings via listing_id.
+        columns:
+          - name: listing_id
+            description: Foreign key → fact_listings.listing_id
+            tests: [not_null]
+
+# ─────────────────────────────────────────────────────────────────────────────
+# STAGING MODELS
+# ─────────────────────────────────────────────────────────────────────────────
+models:
+  - name: stg_listings
+    description: >
+      Staged listings: selects from fact_listings, applies light type casting,
+      renames columns for consistency, and filters out zero-price and extreme
+      outlier listings (> $35,000/night).
+    columns:
+      - name: listing_id
+        description: Unique listing identifier (from fact_listings.listing_id)
+        tests: [not_null, unique]
+      - name: borough
+        description: NYC borough name
+        tests:
+          - not_null
+          - accepted_values:
+              values: [Manhattan, Brooklyn, Queens, Bronx, Staten Island]
+      - name: price_usd
+        description: Nightly listing price in USD (> 0, <= 35000)
+        tests:
+          - not_null
+      - name: room_type
+        description: Airbnb room type
+        tests:
+          - not_null
+          - accepted_values:
+              values:
+                - Entire Home/Apt
+                - Private Room
+                - Shared Room
+                - Hotel Room
+      - name: occupancy_rate
+        description: >
+          Estimated occupancy rate between 0.0 and 1.0.
+          Null if ML pipeline has not been run.
+      - name: estimated_annual_revenue_usd
+        description: >
+          Estimated annual revenue (price × occupancy × 365).
+          Null if ML pipeline has not been run.
+
+  - name: stg_hosts
+    description: >
+      Staged host profiles: normalises Superhost and identity verification flags
+      to boolean, computes host tenure days from host_since.
+    columns:
+      - name: host_id
+        description: Unique host identifier
+        tests: [not_null, unique]
+      - name: is_superhost
+        description: True if the host holds Superhost status
+      - name: is_identity_verified
+        description: True if the host has verified their identity on Airbnb
+      - name: host_tenure_days
+        description: Number of days the host has been active (from host_since to today)
+      - name: total_listings
+        description: Total number of listings declared by the host
+
+  - name: stg_reviews
+    description: >
+      Staged reviews: parses review dates, computes comment character length,
+      and extracts a truncated 200-character preview for display.
+    columns:
+      - name: review_id
+        description: Unique review identifier
+        tests: [not_null, unique]
+      - name: listing_id
+        description: Foreign key to the reviewed listing
+        tests:
+          - not_null
+          - relationships:
+              to: ref('stg_listings')
+              field: listing_id
+      - name: review_date
+        description: Date the review was posted (parsed from string)
+      - name: comment_length_chars
+        description: Number of characters in the review comment
+
+# ─────────────────────────────────────────────────────────────────────────────
+# MART MODELS
+# ─────────────────────────────────────────────────────────────────────────────
+  - name: mart_borough_pricing
+    description: >
+      Borough-level pricing and demand summary table, broken down by room type.
+      Includes average/median/percentile prices, occupancy rates, total market
+      revenue estimates, and ranking columns for BI consumption.
+      This table directly powers the Market Overview tab in the dashboard.
+    columns:
+      - name: borough
+        description: NYC borough
+        tests: [not_null]
+      - name: room_type
+        description: Airbnb room type category
+        tests: [not_null]
+      - name: listing_count
+        description: Number of active listings in this borough × room_type group
+        tests: [not_null]
+      - name: avg_price_usd
+        description: Mean nightly price for this group
+      - name: median_price_usd
+        description: Median nightly price for this group (more robust to outliers)
+      - name: avg_occupancy_rate
+        description: Mean occupancy rate (0.0–1.0) across listings in this group
+      - name: total_market_revenue_usd
+        description: Total estimated annual revenue across all listings in this group
+      - name: global_price_rank
+        description: >
+          Rank of this borough × room_type combination by avg_price_usd
+          (1 = most expensive globally)
+
+  - name: mart_host_performance
+    description: >
+      Host-level performance mart joining host profile attributes (tenure,
+      Superhost status, response metrics) with aggregated listing KPIs.
+      Includes a composite performance_score_100 (0–100) for host ranking.
+      Used by the Host & Reviews tab in the dashboard.
+    columns:
+      - name: host_id
+        description: Unique host identifier
+        tests: [not_null, unique]
+      - name: is_superhost
+        description: Superhost status boolean
+      - name: host_tier
+        description: >
+          Derived host tier:
+          Individual Host (1 listing),
+          Multi-unit Host (2 listings),
+          Professional Host (3–9 listings),
+          Enterprise Host (10+ listings)
+      - name: performance_score_100
+        description: >
+          Composite performance score from 0–100:
+          40% avg rating + 30% occupancy + 20% Superhost bonus
+          + 10% booking flexibility (lower minimum nights = more flexible)
+      - name: total_estimated_revenue_usd
+        description: Sum of estimated annual revenues across all host listings

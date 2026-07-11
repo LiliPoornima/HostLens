@@ -1,0 +1,7 @@
+hostlens:
+  target: dev
+  outputs:
+    dev:
+      type: duckdb
+      path: "../../data/processed/hostlens.db"
+      threads: 4
