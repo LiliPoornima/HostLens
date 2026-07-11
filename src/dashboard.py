@@ -13,7 +13,7 @@ import os
 # ─────────────────────────────────────────────
 st.set_page_config(
     page_title="HostLens · Airbnb Market Intelligence",
-    page_icon="🏠",
+    page_icon="🏡",
     layout="wide",
     initial_sidebar_state="expanded",
     menu_items={"About": "HostLens — Built for the Expernec Data Engineering Assessment"}
@@ -26,64 +26,62 @@ st.markdown("""
 <style>
   @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-  html, body, [class*="css"] { font-family: 'Inter', sans-serif; background-color: #0d1117; color: #e6edf3; }
-  .stApp { background: linear-gradient(135deg, #0d1117 0%, #161b22 60%, #0d1117 100%); }
+  html, body, [class*="css"] { font-family: 'Inter', sans-serif; }
+  .stApp { background: linear-gradient(135deg, var(--background-color) 0%, var(--secondary-background-color) 100%); }
 
   section[data-testid="stSidebar"] {
-      background: linear-gradient(180deg, #161b22 0%, #0d1117 100%) !important;
-      border-right: 1px solid rgba(255,255,255,0.07);
+      border-right: 1px solid rgba(128,128,128,0.15);
   }
   section[data-testid="stSidebar"] .stSelectbox label,
   section[data-testid="stSidebar"] .stSlider label,
-  section[data-testid="stSidebar"] p { color: #8b949e !important; font-size: 12px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
+  section[data-testid="stSidebar"] p { color: var(--text-color) !important; font-size: 11px; font-weight: 600; opacity: 0.7; letter-spacing: 0.05em; text-transform: uppercase; }
 
-  .stTabs [data-baseweb="tab-list"] { background: rgba(22,27,34,0.7); border-radius: 12px; padding: 4px; border: 1px solid rgba(255,255,255,0.06); backdrop-filter: blur(10px); }
-  .stTabs [data-baseweb="tab"] { color: #8b949e !important; font-weight: 500; font-size: 13px; border-radius: 8px; padding: 8px 18px; transition: all 0.2s ease; }
-  .stTabs [aria-selected="true"] { background: linear-gradient(135deg, #FF5A5F, #FC642D) !important; color: white !important; box-shadow: 0 4px 15px rgba(255,90,95,0.35); }
+  .stTabs [data-baseweb="tab-list"] { background: var(--secondary-background-color); border-radius: 12px; padding: 6px; border: 1px solid rgba(128,128,128,0.15); backdrop-filter: blur(10px); flex-wrap: wrap !important; height: auto !important; display: flex !important; gap: 4px; }
+  .stTabs [data-baseweb="tab"] { color: var(--text-color) !important; font-weight: 500; font-size: 13px; border-radius: 8px; padding: 8px 18px; transition: all 0.2s ease; opacity: 0.75; white-space: normal !important; }
+  .stTabs [aria-selected="true"] { background: linear-gradient(135deg, #FF5A5F, #FC642D) !important; color: white !important; box-shadow: 0 4px 15px rgba(255,90,95,0.35); opacity: 1.0 !important; }
 
-  .glass-card { background: rgba(22,27,34,0.6); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 24px; backdrop-filter: blur(12px); transition: all 0.3s ease; margin-bottom: 16px; }
-  .glass-card:hover { border-color: rgba(255,90,95,0.3); box-shadow: 0 8px 32px rgba(255,90,95,0.1); transform: translateY(-2px); }
+  .glass-card { background: var(--background-color); border: 1px solid rgba(128,128,128,0.25); border-radius: 16px; padding: 24px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); transition: all 0.3s ease; margin-bottom: 16px; }
+  .glass-card:hover { border-color: rgba(255,90,95,0.4); box-shadow: 0 8px 32px rgba(255,90,95,0.15); transform: translateY(-2px); }
 
-  .kpi-card { background: rgba(22,27,34,0.8); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 20px 24px; text-align: center; position: relative; overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease; }
+  .kpi-card { background: var(--background-color); border: 1px solid rgba(128,128,128,0.2); border-radius: 16px; padding: 20px 24px; text-align: center; position: relative; overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 4px 15px rgba(0,0,0,0.03); }
   .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 16px 16px 0 0; }
-  .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+  .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.1); }
   .kpi-card.red::before   { background: linear-gradient(90deg, #FF5A5F, #FC642D); }
   .kpi-card.teal::before  { background: linear-gradient(90deg, #00A699, #00ccbb); }
   .kpi-card.blue::before  { background: linear-gradient(90deg, #3a86ff, #5e9eff); }
   .kpi-card.gold::before  { background: linear-gradient(90deg, #f7b731, #f0c22d); }
   .kpi-card.purple::before { background: linear-gradient(90deg, #a855f7, #7c3aed); }
   .kpi-icon { font-size: 28px; margin-bottom: 8px; }
-  .kpi-value { font-size: 28px; font-weight: 800; color: #e6edf3; line-height: 1.1; letter-spacing: -0.5px; }
-  .kpi-label { font-size: 11px; color: #6e7681; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 6px; font-weight: 600; }
+  .kpi-value { font-size: 28px; font-weight: 800; color: var(--text-color); line-height: 1.1; letter-spacing: -0.5px; }
+  .kpi-label { font-size: 11px; color: var(--text-color); opacity: 0.6; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 6px; font-weight: 600; }
   .kpi-delta { font-size: 12px; margin-top: 4px; font-weight: 500; }
   .kpi-delta.up { color: #3fb950; }
 
-  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.07); }
-  .section-header h3 { margin: 0; font-size: 17px; font-weight: 700; color: #e6edf3; }
+  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid rgba(128,128,128,0.2); }
+  .section-header h3 { margin: 0; font-size: 17px; font-weight: 700; color: var(--text-color); }
   .section-pill { background: rgba(255,90,95,0.15); color: #FF5A5F; border: 1px solid rgba(255,90,95,0.3); border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
 
-  .hero-banner { background: linear-gradient(135deg, rgba(255,90,95,0.12) 0%, rgba(0,166,153,0.08) 50%, rgba(58,134,255,0.1) 100%); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; padding: 32px 36px; margin-bottom: 28px; position: relative; overflow: hidden; }
+  .hero-banner { background: linear-gradient(135deg, rgba(255,90,95,0.12) 0%, rgba(0,166,153,0.08) 50%, rgba(58,134,255,0.1) 100%); border: 1px solid rgba(128,128,128,0.2); border-radius: 20px; padding: 32px 36px; margin-bottom: 28px; position: relative; overflow: hidden; }
   .hero-banner::after { content: '🏙️'; position: absolute; right: 36px; top: 50%; transform: translateY(-50%); font-size: 72px; opacity: 0.15; }
   .hero-title { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, #FF5A5F, #FC642D, #f7b731); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin: 0; }
-  .hero-subtitle { color: #8b949e; font-size: 15px; margin-top: 6px; }
+  .hero-subtitle { color: var(--text-color); opacity: 0.85; font-size: 15px; margin-top: 6px; }
   .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(63,185,80,0.15); color: #3fb950; border: 1px solid rgba(63,185,80,0.3); border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; margin-top: 12px; }
 
-  .stTextArea textarea { background: #0d1117 !important; color: #58a6ff !important; border: 1px solid rgba(88,166,255,0.2) !important; border-radius: 8px !important; font-family: 'JetBrains Mono', 'Fira Code', monospace !important; font-size: 13px !important; }
+  .stTextArea textarea { background: var(--background-color) !important; color: var(--text-color) !important; border: 1px solid rgba(128,128,128,0.2) !important; border-radius: 8px !important; font-family: 'JetBrains Mono', 'Fira Code', monospace !important; font-size: 13px !important; }
   .stButton > button { background: linear-gradient(135deg, #FF5A5F, #FC642D) !important; color: white !important; border: none !important; border-radius: 8px !important; font-weight: 600 !important; padding: 8px 24px !important; transition: all 0.2s ease !important; }
   .stButton > button:hover { transform: translateY(-1px) !important; box-shadow: 0 6px 20px rgba(255,90,95,0.4) !important; }
 
-  .stSelectbox > div > div { background: rgba(22,27,34,0.8) !important; border-color: rgba(255,255,255,0.1) !important; }
-  div[data-testid="stMetricValue"] { color: #e6edf3 !important; font-weight: 700 !important; }
-  div[data-testid="stMetricLabel"] p { color: #6e7681 !important; }
-  .stDataFrame { border-radius: 12px; overflow: hidden; }
-  thead tr th { background: #161b22 !important; color: #8b949e !important; }
-  hr { border-color: rgba(255,255,255,0.06) !important; }
+  div[data-testid="stMetricValue"] { color: var(--text-color) !important; font-weight: 700 !important; }
+  div[data-testid="stMetricLabel"] p { color: var(--text-color) !important; opacity: 0.7; }
+  .stDataFrame { border-radius: 12px; overflow: hidden; border: 1px solid rgba(128,128,128,0.15); }
+  thead tr th { background: var(--secondary-background-color) !important; color: var(--text-color) !important; }
+  hr { border-color: rgba(128,128,128,0.15) !important; }
   .stAlert { border-radius: 10px !important; }
 
-  .sidebar-brand { text-align: center; padding: 20px 0 24px; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 20px; }
+  .sidebar-brand { text-align: center; padding: 20px 0 24px; border-bottom: 1px solid rgba(128,128,128,0.2); margin-bottom: 20px; }
   .sidebar-brand-title { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #FF5A5F, #FC642D); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .sidebar-brand-sub { font-size: 11px; color: #6e7681; letter-spacing: 0.1em; text-transform: uppercase; }
-  .filter-label { font-size: 11px; color: #6e7681; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 4px; }
+  .sidebar-brand-sub { font-size: 11px; color: var(--text-color); opacity: 0.6; letter-spacing: 0.1em; text-transform: uppercase; }
+  .filter-label { font-size: 11px; color: var(--text-color); opacity: 0.7; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 4px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -153,7 +151,9 @@ def load_metadata(city_key="nyc"):
 with st.sidebar:
     st.markdown("""
     <div class="sidebar-brand">
-        <div style="font-size:36px;margin-bottom:4px">🏠</div>
+        <svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" style="fill:#FF5A5F; width:44px; height:44px; display:block; margin:0 auto 10px;">
+            <path d="M12.001 18.275c-1.353-1.697-2.148-3.184-2.413-4.457-.263-1.027-.16-1.848.291-2.465.477-.71 1.188-1.056 2.121-1.056s1.643.345 2.12 1.063c.446.61.558 1.432.286 2.465-.291 1.298-1.085 2.785-2.412 4.458zm9.601 1.14c-.185 1.246-1.034 2.28-2.2 2.783-2.253.98-4.483-.583-6.392-2.704 3.157-3.951 3.74-7.028 2.385-9.018-.795-1.14-1.933-1.695-3.394-1.695-2.944 0-4.563 2.49-3.927 5.382.37 1.565 1.352 3.343 2.917 5.332-.98 1.085-1.91 1.856-2.732 2.333-.636.344-1.245.558-1.828.609-2.679.399-4.778-2.2-3.825-4.88.132-.345.395-.98.845-1.961l.025-.053c1.464-3.178 3.242-6.79 5.285-10.795l.053-.132.58-1.116c.45-.822.635-1.19 1.351-1.643.346-.21.77-.315 1.246-.315.954 0 1.698.558 2.016 1.007.158.239.345.557.582.953l.558 1.089.08.159c2.041 4.004 3.821 7.608 5.279 10.794l.026.025.533 1.22.318.764c.243.613.294 1.222.213 1.858zm1.22-2.39c-.186-.583-.505-1.271-.9-2.094v-.03c-1.889-4.006-3.642-7.608-5.307-10.844l-.111-.163C15.317 1.461 14.468 0 12.001 0c-2.44 0-3.476 1.695-4.535 3.898l-.081.16c-1.669 3.236-3.421 6.843-5.303 10.847v.053l-.559 1.22c-.21.504-.317.768-.345.847C-.172 20.74 2.611 24 5.98 24c.027 0 .132 0 .265-.027h.372c1.75-.213 3.554-1.325 5.384-3.317 1.829 1.989 3.635 3.104 5.382 3.317h.372c.133.027.239.027.265.027 3.37.003 6.152-3.261 4.802-6.975z"/>
+        </svg>
         <div class="sidebar-brand-title">HostLens</div>
         <div class="sidebar-brand-sub">Market Intelligence</div>
     </div>
@@ -248,10 +248,10 @@ tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12 = st.t
 
 PLOTLY_THEME = dict(
     paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(22,27,34,0.5)",
-    font=dict(family="Inter", color="#8b949e"),
-    xaxis=dict(gridcolor="rgba(255,255,255,0.05)", linecolor="rgba(255,255,255,0.07)"),
-    yaxis=dict(gridcolor="rgba(255,255,255,0.05)", linecolor="rgba(255,255,255,0.07)"),
+    plot_bgcolor="rgba(0,0,0,0)",
+    font=dict(family="Inter", color="#6e7681"),
+    xaxis=dict(gridcolor="rgba(128,128,128,0.1)", linecolor="rgba(128,128,128,0.15)"),
+    yaxis=dict(gridcolor="rgba(128,128,128,0.1)", linecolor="rgba(128,128,128,0.15)"),
     margin=dict(t=30, b=40, l=40, r=20),
 )
 
@@ -356,26 +356,41 @@ with tab1:
 # TAB 2 — MAP EXPLORER
 # ════════════════════════════════════════════
 with tab2:
-    st.markdown('<div class="section-header"><h3>Geographic Price Heatmap — New York City</h3><span class="section-pill">Hover for Details</span></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-header"><h3>Geographic Price Heatmap — {selected_city_name}</h3><span class="section-pill">Hover for Details</span></div>', unsafe_allow_html=True)
+
+    # Use the group column for the city (neighbourhood_group_cleansed or neighbourhood_cleansed)
+    map_cols = ["latitude", "longitude", "price", "room_type", "neighbourhood_cleansed"]
+    if group_col in filtered_df.columns and group_col not in map_cols:
+        map_cols.append(group_col)
 
     map_df = (
-        filtered_df[["latitude", "longitude", "price", "room_type",
-                      "neighbourhood_group_cleansed", "neighbourhood_cleansed"]]
-        .dropna().query("price <= 800")
+        filtered_df[map_cols]
+        .dropna(subset=["latitude", "longitude", "price"]).query("price <= 800")
     )
     map_df = map_df.sample(min(8000, len(map_df)), random_state=1)
+
+    # Calculate dynamic center based on listings
+    if not map_df.empty:
+        center_lat = map_df["latitude"].mean()
+        center_lon = map_df["longitude"].mean()
+    else:
+        center_lat, center_lon = 40.7128, -74.0060
+
+    # Ensure hover data has correct columns
+    hover_cols = {"latitude": False, "longitude": False, "price": True, "room_type": True}
+    if group_col in map_df.columns:
+        hover_cols[group_col] = True
 
     fig_map = px.scatter_mapbox(
         map_df, lat="latitude", lon="longitude",
         color="price", size="price", size_max=12,
         color_continuous_scale=["#00A699", "#f7b731", "#FF5A5F"],
-        range_color=[map_df["price"].quantile(0.05), map_df["price"].quantile(0.95)],
+        range_color=[map_df["price"].quantile(0.05) if not map_df.empty else 10, map_df["price"].quantile(0.95) if not map_df.empty else 500],
         hover_name="neighbourhood_cleansed",
-        hover_data={"latitude": False, "longitude": False, "price": True,
-                    "room_type": True, "neighbourhood_group_cleansed": True},
+        hover_data=hover_cols,
         mapbox_style="carto-darkmatter",
-        zoom=10, center={"lat": 40.7128, "lon": -74.0060}, opacity=0.8,
-        labels={"price": "Price ($/night)", "neighbourhood_group_cleansed": "Borough", "room_type": "Room Type"},
+        zoom=10 if selected_city_name != "New York City" else 10, center={"lat": center_lat, "lon": center_lon}, opacity=0.8,
+        labels={"price": "Price ($/night)", group_col: group_label, "room_type": "Room Type"},
     )
     fig_map.update_layout(
         paper_bgcolor="rgba(0,0,0,0)",
@@ -392,17 +407,17 @@ with tab2:
     )
     st.plotly_chart(fig_map, width="stretch")
 
-    st.markdown('<div class="section-header"><h3>Listing Density by Borough</h3></div>', unsafe_allow_html=True)
-    dens = filtered_df["neighbourhood_group_cleansed"].value_counts().reset_index()
-    dens.columns = ["Borough", "Listings"]
+    st.markdown(f'<div class="section-header"><h3>Listing Density by {group_label}</h3></div>', unsafe_allow_html=True)
+    dens = filtered_df[group_col].value_counts().reset_index()
+    dens.columns = [group_label, "Listings"]
     dens["Share (%)"] = (dens["Listings"] / dens["Listings"].sum() * 100).round(1)
     fig_dens = px.bar(
-        dens, x="Listings", y="Borough", orientation="h",
+        dens, x="Listings", y=group_label, orientation="h",
         color="Listings", color_continuous_scale=["#003366", "#FF5A5F"],
         text="Share (%)",
     )
-    fig_dens.update_traces(texttemplate="%{text}%", textposition="outside")
-    dens_layout = {**PLOTLY_THEME, "showlegend": False, "coloraxis_showscale": False, "height": 280}
+    fig_dens.update_traces(textposition="outside")
+    dens_layout = {**PLOTLY_THEME, "showlegend": False, "coloraxis_showscale": False, "height": 320}
     dens_layout["yaxis"] = {**PLOTLY_THEME["yaxis"], "categoryorder": "total ascending"}
     fig_dens.update_layout(**dens_layout)
     st.plotly_chart(fig_dens, width="stretch")
@@ -410,12 +425,21 @@ with tab2:
     # GAP 2: Spatial Review Scores Map
     st.markdown('<div class="section-header"><h3>Spatial Review Score Map</h3><span class="section-pill">Avg Rating by Location</span></div>', unsafe_allow_html=True)
     st.markdown("Each dot represents a listing coloured by its review score. Darker red = lower ratings; green = higher. Use this to identify consistently high/low rating clusters.")
+    
+    spatial_rating_cols = ["latitude", "longitude", "review_scores_rating", "neighbourhood_cleansed", "price"]
+    if group_col in filtered_df.columns and group_col not in spatial_rating_cols:
+        spatial_rating_cols.append(group_col)
+
     spatial_rating_df = (
-        filtered_df[["latitude", "longitude", "review_scores_rating",
-                      "neighbourhood_cleansed", "neighbourhood_group_cleansed", "price"]]
+        filtered_df[spatial_rating_cols]
         .dropna(subset=["review_scores_rating", "latitude", "longitude"])
     )
     spatial_rating_df = spatial_rating_df.sample(min(8000, len(spatial_rating_df)), random_state=7)
+    
+    spatial_hover_cols = {"latitude": False, "longitude": False, "review_scores_rating": True, "price": True}
+    if group_col in spatial_rating_df.columns:
+        spatial_hover_cols[group_col] = True
+
     fig_rating_map = px.scatter_mapbox(
         spatial_rating_df,
         lat="latitude", lon="longitude",
@@ -424,12 +448,10 @@ with tab2:
         color_continuous_scale=["#f85149", "#f7b731", "#3fb950"],
         range_color=[3.5, 5.0],
         hover_name="neighbourhood_cleansed",
-        hover_data={"latitude": False, "longitude": False,
-                    "review_scores_rating": True,
-                    "neighbourhood_group_cleansed": True, "price": True},
+        hover_data=spatial_hover_cols,
         mapbox_style="carto-darkmatter",
-        zoom=10, center={"lat": 40.7128, "lon": -74.0060},
-        labels={"review_scores_rating": "Rating", "neighbourhood_group_cleansed": "Borough"},
+        zoom=10, center={"lat": center_lat, "lon": center_lon},
+        labels={"review_scores_rating": "Rating", group_col: group_label},
     )
     fig_rating_map.update_layout(
         paper_bgcolor="rgba(0,0,0,0)",
@@ -446,22 +468,33 @@ with tab2:
     st.plotly_chart(fig_rating_map, width="stretch")
 
     # Avg rating by neighbourhood table
-    st.markdown('<div class="section-header"><h3>Average Rating by Neighbourhood (Top 20 vs Bottom 10)</h3></div>', unsafe_allow_html=True)
+    st.markdown(f'<div class="section-header"><h3>Average Rating by Neighbourhood (Top 20 vs Bottom 10)</h3></div>', unsafe_allow_html=True)
+    
+    groupby_cols = ["neighbourhood_cleansed"]
+    if group_col in filtered_df.columns and group_col != "neighbourhood_cleansed":
+        groupby_cols.append(group_col)
+
     nbh_rating = (
-        filtered_df.groupby(["neighbourhood_cleansed", "neighbourhood_group_cleansed"])
+        filtered_df.groupby(groupby_cols)
         .agg(avg_rating=("review_scores_rating", "mean"), count=("review_scores_rating", "count"))
         .reset_index()
         .query("count >= 10")
         .sort_values("avg_rating", ascending=False)
     )
     nbh_rating["avg_rating"] = nbh_rating["avg_rating"].round(3)
+    
+    # Rename dict for column displays
+    rename_cols = {"neighbourhood_cleansed": "Neighbourhood", "avg_rating": "Avg Rating", "count": "Listings"}
+    if group_col in filtered_df.columns and group_col != "neighbourhood_cleansed":
+        rename_cols[group_col] = group_label
+
     mr1, mr2 = st.columns(2)
     with mr1:
         st.markdown("**🟢 Top 10 Highest Rated Neighbourhoods**")
-        st.dataframe(nbh_rating.head(10).rename(columns={"neighbourhood_cleansed": "Neighbourhood", "neighbourhood_group_cleansed": "Borough", "avg_rating": "Avg Rating", "count": "Listings"}), width="stretch")
+        st.dataframe(nbh_rating.head(10).rename(columns=rename_cols), width="stretch", hide_index=True)
     with mr2:
         st.markdown("**🔴 Bottom 10 Lowest Rated Neighbourhoods**")
-        st.dataframe(nbh_rating.tail(10).rename(columns={"neighbourhood_cleansed": "Neighbourhood", "neighbourhood_group_cleansed": "Borough", "avg_rating": "Avg Rating", "count": "Listings"}), width="stretch")
+        st.dataframe(nbh_rating.tail(10).rename(columns=rename_cols), width="stretch", hide_index=True)
 
 # ════════════════════════════════════════════
 # TAB 3 — HOST & REVIEWS
@@ -2048,17 +2081,25 @@ with tab12:
 
         for i, (city_name, data) in enumerate(all_cities.items()):
             with kpi_cols[i]:
-                st.markdown(f"""
-                <div class="glass-card" style="text-align:center;padding:20px;">
-                    <div style="font-size:36px;margin-bottom:8px">{data['flag']}</div>
-                    <div style="font-size:16px;font-weight:800;color:#e6edf3;margin-bottom:16px">{city_name}</div>
-                    {''.join(f'''
-                    <div style="margin-bottom:10px;">
-                        <div style="font-size:11px;color:#6e7681;text-transform:uppercase;letter-spacing:0.07em">{label}</div>
-                        <div style="font-size:18px;font-weight:700;color:#FF5A5F">{fmt.format(data[key])}</div>
-                    </div>''' for label, key, fmt in metrics if key in data)}
-                </div>
-                """, unsafe_allow_html=True)
+                html_items = []
+                for label, key, fmt in metrics:
+                    if key in data:
+                        html_items.append(
+                            f'<div style="margin-bottom:10px;">'
+                            f'<div style="font-size:11px;color:var(--text-color);opacity:0.6;text-transform:uppercase;letter-spacing:0.07em">{label}</div>'
+                            f'<div style="font-size:18px;font-weight:700;color:#FF5A5F">{fmt.format(data[key])}</div>'
+                            f'</div>'
+                        )
+                items_str = "".join(html_items)
+                
+                card_html = (
+                    f'<div class="glass-card" style="text-align:center;padding:20px;">'
+                    f'<div style="font-size:36px;margin-bottom:8px">{data["flag"]}</div>'
+                    f'<div style="font-size:16px;font-weight:800;color:var(--text-color);margin-bottom:16px">{city_name}</div>'
+                    f'{items_str}'
+                    f'</div>'
+                )
+                st.markdown(card_html, unsafe_allow_html=True)
 
         st.markdown("---")
 
