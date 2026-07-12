@@ -24,66 +24,196 @@ st.set_page_config(
 # ─────────────────────────────────────────────
 st.markdown("""
 <style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
-
-  html, body, [class*="css"] { font-family: 'Inter', sans-serif; background-color: #0d1117; color: #e6edf3; }
-  .stApp { background: linear-gradient(135deg, #0d1117 0%, #161b22 60%, #0d1117 100%); }
-
   section[data-testid="stSidebar"] {
-      background: linear-gradient(180deg, #161b22 0%, #0d1117 100%) !important;
-      border-right: 1px solid rgba(255,255,255,0.07);
+      border-right: 1px solid rgba(128,128,128,0.15);
   }
-  section[data-testid="stSidebar"] .stSelectbox label,
-  section[data-testid="stSidebar"] .stSlider label,
-  section[data-testid="stSidebar"] p { color: #8b949e !important; font-size: 12px; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; }
 
-  .stTabs [data-baseweb="tab-list"] { background: rgba(22,27,34,0.7); border-radius: 12px; padding: 4px; border: 1px solid rgba(255,255,255,0.06); backdrop-filter: blur(10px); }
-  .stTabs [data-baseweb="tab"] { color: #8b949e !important; font-weight: 500; font-size: 13px; border-radius: 8px; padding: 8px 18px; transition: all 0.2s ease; }
-  .stTabs [aria-selected="true"] { background: linear-gradient(135deg, #FF5A5F, #FC642D) !important; color: white !important; box-shadow: 0 4px 15px rgba(255,90,95,0.35); }
+  .stTabs [data-baseweb="tab-list"] { 
+      background: rgba(128, 128, 128, 0.05) !important; 
+      border-radius: 12px; 
+      padding: 4px; 
+      border: 1px solid rgba(128, 128, 128, 0.1); 
+      backdrop-filter: blur(10px); 
+  }
+  .stTabs [data-baseweb="tab"] { 
+      font-weight: 500; 
+      font-size: 13px; 
+      border-radius: 8px; 
+      padding: 8px 18px; 
+      transition: all 0.2s ease; 
+  }
+  .stTabs [aria-selected="true"] { 
+      background: linear-gradient(135deg, #FF5A5F, #FC642D) !important; 
+      color: white !important; 
+      box-shadow: 0 4px 15px rgba(255,90,95,0.25); 
+  }
 
-  .glass-card { background: rgba(22,27,34,0.6); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 24px; backdrop-filter: blur(12px); transition: all 0.3s ease; margin-bottom: 16px; }
-  .glass-card:hover { border-color: rgba(255,90,95,0.3); box-shadow: 0 8px 32px rgba(255,90,95,0.1); transform: translateY(-2px); }
+  .glass-card { 
+      background: rgba(128, 128, 128, 0.05); 
+      border: 1px solid rgba(128, 128, 128, 0.15); 
+      border-radius: 16px; 
+      padding: 24px; 
+      backdrop-filter: blur(12px); 
+      transition: all 0.3s ease; 
+      margin-bottom: 16px; 
+  }
+  .glass-card:hover { 
+      border-color: rgba(255, 90, 95, 0.3); 
+      box-shadow: 0 8px 32px rgba(255, 90, 95, 0.08); 
+      transform: translateY(-2px); 
+  }
 
-  .kpi-card { background: rgba(22,27,34,0.8); border: 1px solid rgba(255,255,255,0.07); border-radius: 16px; padding: 20px 24px; text-align: center; position: relative; overflow: hidden; transition: transform 0.2s ease, box-shadow 0.2s ease; }
-  .kpi-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; border-radius: 16px 16px 0 0; }
-  .kpi-card:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(0,0,0,0.4); }
+  .kpi-card { 
+      background: rgba(128, 128, 128, 0.05); 
+      border: 1px solid rgba(128, 128, 128, 0.15); 
+      border-radius: 16px; 
+      padding: 20px 24px; 
+      text-align: center; 
+      position: relative; 
+      overflow: hidden; 
+      transition: transform 0.2s ease, box-shadow 0.2s ease; 
+  }
+  .kpi-card::before { 
+      content: ''; 
+      position: absolute; 
+      top: 0; 
+      left: 0; 
+      right: 0; 
+      height: 3px; 
+      border-radius: 16px 16px 0 0; 
+  }
+  .kpi-card:hover { 
+      transform: translateY(-4px); 
+      box-shadow: 0 8px 24px rgba(128, 128, 128, 0.1); 
+  }
   .kpi-card.red::before   { background: linear-gradient(90deg, #FF5A5F, #FC642D); }
   .kpi-card.teal::before  { background: linear-gradient(90deg, #00A699, #00ccbb); }
   .kpi-card.blue::before  { background: linear-gradient(90deg, #3a86ff, #5e9eff); }
   .kpi-card.gold::before  { background: linear-gradient(90deg, #f7b731, #f0c22d); }
   .kpi-card.purple::before { background: linear-gradient(90deg, #a855f7, #7c3aed); }
+  
   .kpi-icon { font-size: 28px; margin-bottom: 8px; }
-  .kpi-value { font-size: 28px; font-weight: 800; color: #e6edf3; line-height: 1.1; letter-spacing: -0.5px; }
-  .kpi-label { font-size: 11px; color: #6e7681; text-transform: uppercase; letter-spacing: 0.08em; margin-top: 6px; font-weight: 600; }
+  .kpi-value { 
+      font-size: 28px; 
+      font-weight: 800; 
+      line-height: 1.1; 
+      letter-spacing: -0.5px; 
+  }
+  .kpi-label { 
+      font-size: 11px; 
+      text-transform: uppercase; 
+      letter-spacing: 0.08em; 
+      margin-top: 6px; 
+      font-weight: 600; 
+  }
   .kpi-delta { font-size: 12px; margin-top: 4px; font-weight: 500; }
-  .kpi-delta.up { color: #3fb950; }
+  .kpi-delta.up { color: #2ecc71; }
 
-  .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; padding-bottom: 12px; border-bottom: 1px solid rgba(255,255,255,0.07); }
-  .section-header h3 { margin: 0; font-size: 17px; font-weight: 700; color: #e6edf3; }
-  .section-pill { background: rgba(255,90,95,0.15); color: #FF5A5F; border: 1px solid rgba(255,90,95,0.3); border-radius: 20px; padding: 2px 10px; font-size: 11px; font-weight: 600; }
+  .section-header { 
+      display: flex; 
+      align-items: center; 
+      gap: 10px; 
+      margin-bottom: 20px; 
+      padding-bottom: 12px; 
+      border-bottom: 1px solid rgba(128, 128, 128, 0.15); 
+  }
+  .section-header h3 { 
+      margin: 0; 
+      font-size: 17px; 
+      font-weight: 700; 
+  }
+  .section-pill { 
+      background: rgba(255,90,95,0.15); 
+      color: #FF5A5F; 
+      border: 1px solid rgba(255,90,95,0.3); 
+      border-radius: 20px; 
+      padding: 2px 10px; 
+      font-size: 11px; 
+      font-weight: 600; 
+  }
 
-  .hero-banner { background: linear-gradient(135deg, rgba(255,90,95,0.12) 0%, rgba(0,166,153,0.08) 50%, rgba(58,134,255,0.1) 100%); border: 1px solid rgba(255,255,255,0.06); border-radius: 20px; padding: 32px 36px; margin-bottom: 28px; position: relative; overflow: hidden; }
+  .hero-banner { 
+      background: linear-gradient(135deg, rgba(255,90,95,0.08) 0%, rgba(0,166,153,0.04) 50%, rgba(58,134,255,0.06) 100%); 
+      border: 1px solid rgba(128, 128, 128, 0.15); 
+      border-radius: 20px; 
+      padding: 32px 36px; 
+      margin-bottom: 28px; 
+      position: relative; 
+      overflow: hidden; 
+  }
   .hero-banner::after { content: '🏙️'; position: absolute; right: 36px; top: 50%; transform: translateY(-50%); font-size: 72px; opacity: 0.15; }
-  .hero-title { font-size: 32px; font-weight: 800; background: linear-gradient(135deg, #FF5A5F, #FC642D, #f7b731); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin: 0; }
-  .hero-subtitle { color: #8b949e; font-size: 15px; margin-top: 6px; }
-  .hero-badge { display: inline-flex; align-items: center; gap: 6px; background: rgba(63,185,80,0.15); color: #3fb950; border: 1px solid rgba(63,185,80,0.3); border-radius: 20px; padding: 4px 12px; font-size: 12px; font-weight: 600; margin-top: 12px; }
+  .hero-title { 
+      font-size: 32px; 
+      font-weight: 800; 
+      background: linear-gradient(135deg, #FF5A5F, #FC642D, #f7b731); 
+      -webkit-background-clip: text; 
+      -webkit-text-fill-color: transparent; 
+      background-clip: text; 
+      margin: 0; 
+  }
+  .hero-subtitle { 
+      font-size: 15px; 
+      margin-top: 6px; 
+  }
+  .hero-badge { 
+      display: inline-flex; 
+      align-items: center; 
+      gap: 6px; 
+      background: rgba(46, 204, 113, 0.15); 
+      color: #2ecc71; 
+      border: 1px solid rgba(46, 204, 113, 0.3); 
+      border-radius: 20px; 
+      padding: 4px 12px; 
+      font-size: 12px; 
+      font-weight: 600; 
+      margin-top: 12px; 
+  }
 
-  .stTextArea textarea { background: #0d1117 !important; color: #58a6ff !important; border: 1px solid rgba(88,166,255,0.2) !important; border-radius: 8px !important; font-family: 'JetBrains Mono', 'Fira Code', monospace !important; font-size: 13px !important; }
-  .stButton > button { background: linear-gradient(135deg, #FF5A5F, #FC642D) !important; color: white !important; border: none !important; border-radius: 8px !important; font-weight: 600 !important; padding: 8px 24px !important; transition: all 0.2s ease !important; }
-  .stButton > button:hover { transform: translateY(-1px) !important; box-shadow: 0 6px 20px rgba(255,90,95,0.4) !important; }
+  .stTextArea textarea { 
+      border: 1px solid rgba(128,128,128,0.2) !important; 
+      border-radius: 8px !important; 
+      font-family: 'JetBrains Mono', 'Fira Code', monospace !important; 
+      font-size: 13px !important; 
+  }
+  .stButton > button { 
+      background: linear-gradient(135deg, #FF5A5F, #FC642D) !important; 
+      color: white !important; 
+      border: none !important; 
+      border-radius: 8px !important; 
+      font-weight: 600 !important; 
+      padding: 8px 24px !important; 
+      transition: all 0.2s ease !important; 
+  }
+  .stButton > button:hover { 
+      transform: translateY(-1px) !important; 
+      box-shadow: 0 6px 20px rgba(255,90,95,0.3) !important; 
+  }
 
-  .stSelectbox > div > div { background: rgba(22,27,34,0.8) !important; border-color: rgba(255,255,255,0.1) !important; }
-  div[data-testid="stMetricValue"] { color: #e6edf3 !important; font-weight: 700 !important; }
-  div[data-testid="stMetricLabel"] p { color: #6e7681 !important; }
   .stDataFrame { border-radius: 12px; overflow: hidden; }
-  thead tr th { background: #161b22 !important; color: #8b949e !important; }
-  hr { border-color: rgba(255,255,255,0.06) !important; }
+  hr { border-color: rgba(128,128,128,0.15) !important; }
   .stAlert { border-radius: 10px !important; }
 
-  .sidebar-brand { text-align: center; padding: 20px 0 24px; border-bottom: 1px solid rgba(255,255,255,0.07); margin-bottom: 20px; }
-  .sidebar-brand-title { font-size: 22px; font-weight: 800; background: linear-gradient(135deg, #FF5A5F, #FC642D); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .sidebar-brand-sub { font-size: 11px; color: #6e7681; letter-spacing: 0.1em; text-transform: uppercase; }
-  .filter-label { font-size: 11px; color: #6e7681; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600; margin-bottom: 4px; }
+  .sidebar-brand { text-align: center; padding: 20px 0 24px; border-bottom: 1px solid rgba(128,128,128,0.15); margin-bottom: 20px; }
+  .sidebar-brand-title { 
+      font-size: 22px; 
+      font-weight: 800; 
+      background: linear-gradient(135deg, #FF5A5F, #FC642D); 
+      -webkit-background-clip: text; 
+      -webkit-text-fill-color: transparent; 
+      background-clip: text; 
+  }
+  .sidebar-brand-sub { 
+      font-size: 11px; 
+      letter-spacing: 0.1em; 
+      text-transform: uppercase; 
+  }
+  .filter-label { 
+      font-size: 11px; 
+      text-transform: uppercase; 
+      letter-spacing: 0.08em; 
+      font-weight: 600; 
+      margin-bottom: 4px; 
+  }
 </style>
 """, unsafe_allow_html=True)
 
@@ -250,14 +380,14 @@ def get_pricing_agent():
 
 PLOTLY_THEME = dict(
     paper_bgcolor="rgba(0,0,0,0)",
-    plot_bgcolor="rgba(22,27,34,0.5)",
-    font=dict(family="Inter", color="#8b949e"),
-    xaxis=dict(gridcolor="rgba(255,255,255,0.05)", linecolor="rgba(255,255,255,0.07)"),
-    yaxis=dict(gridcolor="rgba(255,255,255,0.05)", linecolor="rgba(255,255,255,0.07)"),
+    plot_bgcolor="rgba(0,0,0,0)",
+    font=dict(family="Inter"),
+    xaxis=dict(gridcolor="rgba(128,128,128,0.1)", linecolor="rgba(128,128,128,0.15)"),
+    yaxis=dict(gridcolor="rgba(128,128,128,0.1)", linecolor="rgba(128,128,128,0.15)"),
     margin=dict(t=30, b=40, l=40, r=20),
 )
 
-BRAND_COLORS = ["#FF5A5F", "#00A699", "#FC642D", "#3a86ff", "#f7b731", "#a855f7", "#3fb950"]
+BRAND_COLORS = ["#FF5A5F", "#00A699", "#FC642D", "#3a86ff", "#f7b731", "#a855f7", "#34d399"]
 
 tab1, tab2, tab3, tab4, tab5, tab6, tab7, tab8, tab9, tab10, tab11, tab12 = st.tabs([
     "📊 Market Overview",
