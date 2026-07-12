@@ -1,8 +1,18 @@
-# HostLens: Advanced Multi-City Airbnb Data Engineering & Analytics Platform
+# HostLens: Airbnb Data Engineering & Analytics Project
 
 [![Streamlit App](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://hostlens.streamlit.app/)
 
-HostLens is an end-to-end, enterprise-grade data engineering, machine learning, and analytical platform built to ingest, clean, enrich, and model Airbnb listings. The platform fully supports multi-market analyses for **New York City**, **Boston**, and **San Francisco**, scaling from a single-city DuckDB proof-of-concept into a highly optimized, 7-layer production cloud architecture.
+HostLens is an end-to-end data engineering and analytics project built on the public Inside Airbnb dataset. It covers ingestion, cleaning, enrichment, clustering, statistical analysis, forecasting, machine learning, and dashboarding across **New York City**, **Boston**, and **San Francisco**. The project is structured as a reproducible pipeline with supporting dbt models, tests, and reporting artifacts.
+
+---
+
+## Assignment Summary
+
+### Completed Work
+I completed the core pipeline and analysis workflow required for a realistic Airbnb market study. The submission includes data ingestion, preprocessing, feature engineering, clustering, statistical testing, pricing model development, occupancy forecasting, dashboard presentation, and validation artifacts. The work is organized so it can be reviewed stage by stage rather than as a single monolithic script.
+
+### Incomplete Work
+I did not fully implement a live production deployment or a real-time streaming system. Some cloud-scale and MLOps elements are documented as target architecture or simulated components rather than fully deployed infrastructure. That scope was intentionally deferred so the submission could prioritize the most important assessment goal: a working, reproducible end-to-end data pipeline with clear analytical outputs.
 
 ### 🌐 Live Deployment
 The platform is deployed and publicly accessible at:  
@@ -10,14 +20,14 @@ The platform is deployed and publicly accessible at:
 
 ---
 
-## 🔍 Deliverables & Recommended Review Order
+## Deliverables & Recommended Review Order
 
 To review the project deliverables systematically, please follow this sequence:
 
 1. **`README.md`** (This file): Establishes system context, setup instructions, and component outlines.
 2. **Deployed Dashboard [https://hostlens.streamlit.app/](https://hostlens.streamlit.app/)**:
-   * Interactive market overview, dynamic map clustering, ML explainability (SHAP plots), and occupancy forecasting.
-   * Features a **Live Kafka Streaming Simulation** where you can trigger simulated events and catch real-time neighborhood anomalies.
+   * Interactive market overview, map exploration, model explainability, and occupancy forecasting.
+   * Includes a simulated streaming experience for demonstrating event-driven monitoring concepts.
    * Switch between **NYC**, **Boston**, and **San Francisco** dynamically in the sidebar.
 3. **`reports/HostLens_Executive_Report.pdf`**: A comprehensive analytical report compiling statistical inferences (H1-H5 with Bonferroni correction), ML pricing modeling performance, occupancy forecasting, and cost governance.
 4. **dbt Transformation Layer ([dbt/hostlens/](file:///c:/Users/Poornima%20Liyanage/Documents/GitHub/HostLens/dbt/hostlens/))**: Validates staging views, mart models, documentation, and the 24 database constraints.
@@ -26,19 +36,19 @@ To review the project deliverables systematically, please follow this sequence:
 
 ---
 
-## 🔒 Security, Privacy & Anonymization
-* **Zero Hardcoded Credentials**: No API keys, database access tokens, or cloud platform passwords exist within this repository. Simulated configurations are used where necessary.
-* **PII & Privacy Scrubbing**: Guest names, reviewer identifiers, and exact geographic coordinates have been fully scrubbed or masked during ETL ingestion. Spatial parameters are aggregated using listing cluster IDs.
+## Security, Privacy & Anonymization
+* **No hardcoded credentials**: The repository does not contain API keys, database passwords, or cloud access tokens. Simulated configuration is used where needed.
+* **PII scrubbing**: Guest names, reviewer identifiers, and exact geographic coordinates are masked or removed during ETL ingestion. Spatial analysis is performed on grouped or aggregated location fields.
 
 ---
 
-## 🚀 Quick Start & Reproducibility
+## Quick Start & Reproducibility
 
-### 1. Prerequisites
+### Prerequisites
 - **Python 3.11+**
 - **pip** (Python package installer)
 
-### 2. Environment Setup
+### Environment Setup
 Clone the repository and run the setup commands to build the virtual environment and install dependencies:
 ```powershell
 # Set execution policy if blocked on Windows PowerShell
@@ -49,7 +59,7 @@ python -m venv venv
 .\venv\Scripts\pip install -r requirements.txt
 ```
 
-### 3. Run the Ingestion & ETL Pipeline
+### Run the Ingestion & ETL Pipeline
 Run the master ingestion, data profiling, cleaning, enrichment, database loading, and clustering pipeline for any city (`nyc`, `boston`, or `sf`):
 ```powershell
 # Run NYC Ingest
@@ -62,7 +72,7 @@ Run the master ingestion, data profiling, cleaning, enrichment, database loading
 .\venv\Scripts\python.exe src/pipeline.py --city sf
 ```
 
-### 4. Run Machine Learning & Statistics Pipeline
+### Run the Machine Learning & Statistics Pipeline
 Train pricing prediction/explainability models, compile forecasts, and run statistical hypothesis tests for each market:
 ```powershell
 # NYC Analytics
@@ -81,7 +91,7 @@ Train pricing prediction/explainability models, compile forecasts, and run stati
 .\venv\Scripts\python.exe src/statistics_analysis.py --city sf
 ```
 
-### 5. Compile & Run the dbt Project
+### Compile and Run the dbt Project
 Verify database transformations, materialize analytical marts, and run data quality checks using dbt:
 ```powershell
 cd dbt/hostlens
@@ -89,19 +99,19 @@ cd dbt/hostlens
 ..\..\venv\Scripts\dbt test --profiles-dir .
 ```
 
-### 6. Execute the Automated Test Suite
+### Execute the Automated Test Suite
 Run the full suite of unit and data quality validation tests with pytest:
 ```powershell
 .\venv\Scripts\python.exe -m pytest tests/ -v
 ```
 
-### 7. Run the Streamlit Dashboard Locally
+### Run the Streamlit Dashboard Locally
 Launch the interactive web interface to view analytics, run stream simulations, and inspect architecture locally:
 ```powershell
 .\venv\Scripts\python.exe -m streamlit run src/dashboard.py
 ```
 
-### 8. Compile the PDF Executive Report
+### Compile the PDF Executive Report
 Regenerate the comprehensive analytical PDF report:
 ```powershell
 .\venv\Scripts\python.exe src/generate_pdf_report.py
@@ -109,7 +119,7 @@ Regenerate the comprehensive analytical PDF report:
 
 ---
 
-## 📂 Project Structure
+## Project Structure
 
 ```
 HostLens/
@@ -128,9 +138,9 @@ HostLens/
 │   ├── pipeline.py          # Master ETL orchestrator (downloads, cleans, clusters, loads database)
 │   ├── statistics_analysis.py # Statistical testing (H1-H5) & driver OLS
 │   ├── machine_learning.py  # Pricing prediction models & feature importance
-│   ├── forecasting.py       # Prophetic time-series occupancy forecasts
+│   ├── forecasting.py       # Time-series occupancy forecasts
 │   ├── stream_processor.py  # Kafka-style streaming alert engine simulation
-│   └── dashboard.py         # Premium Streamlit UI application
+│   └── dashboard.py         # Streamlit UI application
 ├── tests/                   # Pytest automation suite
 │   ├── conftest.py          # Pytest setup & directory routing configuration
 │   ├── test_pipeline.py     # ETL schema, ceilings, and null thresholds
@@ -142,9 +152,9 @@ HostLens/
 
 ---
 
-## 🖥️ Streamlit Interactive Dashboard Tabs
+## Streamlit Dashboard Tabs
 
-The platform features a **12-tab premium dashboard** styled with custom CSS:
+The platform features a **12-tab dashboard** styled with custom CSS:
 
 1. **📊 Market Overview**: High-level market KPIs, price distributions, and revenue insights.
 2. **🗺️ Map Explorer**: Interactive scatter maps of listings colored by price, centered dynamically for the selected city.
@@ -156,14 +166,14 @@ The platform features a **12-tab premium dashboard** styled with custom CSS:
 8. **🤖 AI Intelligence Hub**: RAG-based Guest Reviews Q&A Console, Content-based Listing Recommender, and AI Listing Description Generator.
 9. **📐 Statistical Analysis**: Bonferroni-corrected hypothesis test evaluations.
 10. **⚙️ MLOps & Governance**: Model registry telemetry, drift thresholds, and model bias analysis.
-11. **☁️ Architecture & Streaming**: End-to-end cloud infrastructure layouts, cost waterfalls, and a **Live Kafka Streaming Simulation** where you can trigger random price events and catch real-time neighborhood anomalies.
+11. **☁️ Architecture & Streaming**: End-to-end cloud infrastructure layouts, cost waterfalls, and a simulated streaming view for event-driven monitoring examples.
 12. **🌍 Cross-City Comparison**: Multi-market comparison comparing metrics (price, ratings, superhosts) across NYC, Boston, and SF.
 
 ---
 
-## 🏗️ 7-Layer Production Cloud Architecture
+## 7-Layer Production Cloud Architecture
 
-To scale HostLens to 50+ cities (100M+ events/year), the system transitions from a single-node DuckDB database to a fully-managed cloud-native lakehouse:
+To illustrate how the project could scale beyond a local prototype, the documentation outlines a 7-layer cloud-native architecture:
 
 1. **Ingestion**: Inside Airbnb API & streaming updates pulled via AWS ECS Fargate tasks.
 2. **Landing**: RAW listing data landed on AWS S3 / Google Cloud Storage, with live updates routed through Apache Kafka topics.
@@ -175,7 +185,7 @@ To scale HostLens to 50+ cities (100M+ events/year), the system transitions from
 
 ---
 
-## 💰 Global-Scale Cost Optimization Design
+## Global-Scale Cost Optimization Design
 
 A naive 50-city deployment costs **$6,810/month**. Using our five targeted optimization strategies, we reduce monthly costs by **63.4%** to **$2,490/month**:
 
@@ -187,10 +197,10 @@ A naive 50-city deployment costs **$6,810/month**. Using our five targeted optim
 
 ---
 
-## 🛡️ AI & Assistive Tools Disclosure
+## AI & Assistive Tools Disclosure
 
 Consistent with professional guidelines, we explicitly disclose the use of artificial intelligence and automated engineering tools in the development of this platform:
 
-1. **Code Generation & Refactoring**: Claude 3.5 Sonnet, Gemini 3.5 Flash, and GPT-4o-based agents were utilized to scaffold project components, compile ReportLab PDF tables, build unit tests, format Streamlit custom CSS, and write the dbt sql views.
+1. **Code Generation & Refactoring**: AI-assisted tools were used to scaffold project components, compile ReportLab PDF tables, build unit tests, format Streamlit custom CSS, and draft dbt SQL views.
 2. **Data Enrichment**: Built-in mock LLM gateways and prompt templates in `src/ai_agent.py` simulate production RAG pipelines for review summarization.
 3. **Validation**: Automated testing scripts verify and ensure that no hallucinated or syntactically invalid code is committed. All credentials, API keys, and personal identifier data have been excluded.
