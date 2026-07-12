@@ -34,10 +34,12 @@ class RAGEngine:
 
     def query(self, user_query, top_n=3):
         if self.vectorizer is None or self.tfidf_matrix is None:
-            return {
-                "answer": "RAG Engine is not initialized. Please run the ETL pipeline first.",
-                "sources": []
-            }
+            self._initialize()
+            if self.vectorizer is None or self.tfidf_matrix is None:
+                return {
+                    "answer": "RAG Engine is not initialized. Please run the ETL pipeline first.",
+                    "sources": []
+                }
         
         # Vectorize query
         query_vec = self.vectorizer.transform([user_query])
@@ -87,22 +89,22 @@ class RAGEngine:
         
         answer = f"""**[AI Generated Synthesis of Guest Feedback]**
 Based on retrieving {len(sources)} matching comments from guest reviews, here is the synthesis:
-
+ 
 {summary_para}
-
+ 
 The retrieved reviews show consistent sentiment regarding details matching your query. Inspect the matching sources below for full reviewer comments and listing IDs."""
         
         return {
             "answer": answer,
             "sources": sources
         }
-
+ 
 class RecommendationEngine:
     def __init__(self, listings_path="data/processed/enriched_listings.csv"):
         self.listings_path = listings_path
         self.listings_df = None
         self._initialize()
-
+ 
     def _initialize(self):
         if not os.path.exists(self.listings_path):
             print(f"Listings dataset not found at {self.listings_path}. Recommender disabled.")
@@ -113,30 +115,44 @@ class RecommendationEngine:
             print("Recommendation Engine initialized successfully.")
         except Exception as e:
             print(f"Error initializing Recommender Engine: {e}")
-
+ 
     def recommend(self, listing_id, top_n=5):
         if self.listings_df is None:
-            return pd.DataFrame()
+            self._initialize()
+            if self.listings_df is None:
+                return pd.DataFrame()
         
         # Verify listing exists
         matching_listings = self.listings_df[self.listings_df["id"] == listing_id]
         if matching_listings.empty:
-            return pd.DataFrame()
+            try:
+                matching_listings = self.listings_df[self.listings_df["id"] == int(float(listing_id))]
+            except Exception:
+                pass
+            if matching_listings.empty:
+                return pd.DataFrame()
             
         target = matching_listings.iloc[0]
         
         # Simple content-based filtering:
-        # Match borough and room type exactly, then find closest base price and ratings
-        subset = self.listings_df[
-            (self.listings_df["id"] != listing_id) &
-            (self.listings_df["neighbourhood_group_cleansed"] == target["neighbourhood_group_cleansed"]) &
-            (self.listings_df["room_type"] == target["room_type"])
-        ].copy()
+        # Match borough and room type exactly if borough/group_col is present, then find closest base price and ratings
+        group_col = "neighbourhood_group_cleansed"
+        if group_col in self.listings_df.columns and group_col in target and pd.notna(target[group_col]):
+            subset = self.listings_df[
+                (self.listings_df["id"] != target["id"]) &
+                (self.listings_df[group_col] == target[group_col]) &
+                (self.listings_df["room_type"] == target["room_type"])
+            ].copy()
+        else:
+            subset = self.listings_df[
+                (self.listings_df["id"] != target["id"]) &
+                (self.listings_df["room_type"] == target["room_type"])
+            ].copy()
         
         if subset.empty:
             # Fallback to room type only
             subset = self.listings_df[
-                (self.listings_df["id"] != listing_id) &
+                (self.listings_df["id"] != target["id"]) &
                 (self.listings_df["room_type"] == target["room_type"])
             ].copy()
             

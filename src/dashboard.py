@@ -7,6 +7,13 @@ import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import json
 import os
+import sys
+
+# Ensure src/ is on the path so ai_agent imports work whether running
+# locally (from src/) or from repo root (Streamlit Cloud)
+_SRC_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+if _SRC_DIR not in sys.path:
+    sys.path.insert(0, _SRC_DIR)
 
 # ─────────────────────────────────────────────
 # PAGE CONFIG
@@ -364,14 +371,22 @@ st.markdown(f"""
 # TABS
 
 @st.cache_resource
-def get_rag_engine():
+def get_rag_engine(city_key="nyc"):
     from ai_agent import RAGEngine
-    return RAGEngine()
+    # Prefer city-specific reviews file, fall back to shared NYC file
+    city_path = f"data/processed/reviews_cleaned_{city_key}.csv"
+    shared_path = "data/processed/reviews_cleaned.csv"
+    reviews_path = city_path if os.path.exists(city_path) else shared_path
+    return RAGEngine(reviews_path=reviews_path)
 
 @st.cache_resource
-def get_recommender():
+def get_recommender(city_key="nyc"):
     from ai_agent import RecommendationEngine
-    return RecommendationEngine()
+    # Prefer city-specific enriched listings, fall back to shared NYC file
+    city_path = f"data/processed/enriched_listings_{city_key}.csv"
+    shared_path = "data/processed/enriched_listings.csv"
+    listings_path = city_path if os.path.exists(city_path) else shared_path
+    return RecommendationEngine(listings_path=listings_path)
 
 @st.cache_resource
 def get_pricing_agent():
@@ -1470,7 +1485,7 @@ with tab8:
             user_query = st.text_input("Ask a question about listings or reviews:", value="Is the subway close or noisy?")
             if st.button("Query Reviews", width="stretch"):
                 with st.spinner("Retrieving and synthesizing review comments..."):
-                    rag_engine = get_rag_engine()
+                    rag_engine = get_rag_engine(city_key=city_key)
                     res = rag_engine.query(user_query)
                     st.markdown(res["answer"])
                     
@@ -1491,7 +1506,7 @@ with tab8:
             listing_options = sorted(df["id"].dropna().unique().tolist())
             selected_listing_id = st.selectbox("Select Target Listing ID:", listing_options[:200]) # limit dropdown size
             if st.button("Generate Recommendations", width="stretch"):
-                recommender = get_recommender()
+                recommender = get_recommender(city_key=city_key)
                 recs = recommender.recommend(selected_listing_id)
                 if not recs.empty:
                     st.success("Matching listing recommendations found:")
@@ -1669,11 +1684,21 @@ with tab6:
     
         st.markdown("---")
         st.markdown('<div class="section-header"><h3>Data Profiling Summary</h3></div>', unsafe_allow_html=True)
+        # Try city-specific profiling file first, then fall back to the shared summary
         df_profiling = load_report(f"reports/data_profiling_summary_{city_key}.csv")
+        if df_profiling is None:
+            df_profiling = load_report("reports/data_profiling_summary.csv")
         if df_profiling is not None:
-            num_cols = df_profiling.select_dtypes("number").columns.tolist()
+            # Filter to listings dataset rows only so the table is focused
+            if "dataset" in df_profiling.columns:
+                df_show = df_profiling[df_profiling["dataset"] == "listings"].copy()
+                if df_show.empty:
+                    df_show = df_profiling.copy()
+            else:
+                df_show = df_profiling.copy()
+            num_cols = df_show.select_dtypes("number").columns.tolist()
             st.dataframe(
-                df_profiling.style.background_gradient(subset=num_cols, cmap="Blues"),
+                df_show.style.background_gradient(subset=num_cols, cmap="Blues"),
                 width="stretch"
             )
         else:
