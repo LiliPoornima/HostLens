@@ -18,6 +18,10 @@ I did not fully implement a live production deployment or a real-time streaming 
 The platform is deployed and publicly accessible at:  
 👉 **[https://hostlens.streamlit.app/](https://hostlens.streamlit.app/)**
 
+### 🎥 Demo Video & Report
+The project demo video and supporting report are available in the shared Google Drive folder:  
+👉 **[Project Demo Video and Report Folder](https://drive.google.com/drive/folders/1UACd56oHg1KomZhbWzPdCJlTUKYbB1vt?usp=drive_link)**
+
 ---
 
 ## Deliverables & Recommended Review Order
