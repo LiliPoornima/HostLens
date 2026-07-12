@@ -189,11 +189,17 @@ def run_pipeline(city="nyc"):
     listings.to_csv(f"{processed_path}/listings_cleaned_{city}.csv", index=False)
     listings.to_csv(f"{processed_path}/enriched_listings_{city}.csv", index=False)
     reviews.to_csv(f"{processed_path}/reviews_cleaned_{city}.csv", index=False)
+    
+    # Save a small sampled reviews file for Streamlit Cloud RAG engine (committed to Git)
+    reviews_sampled = reviews.dropna(subset=["comments"]).sample(n=min(20000, len(reviews)), random_state=42).copy()
+    reviews_sampled.to_csv(f"{processed_path}/reviews_sampled_{city}.csv", index=False)
+    
     if city == "nyc":
         listings.to_csv(f"{processed_path}/listings_cleaned.csv", index=False)
         listings.to_csv(f"{processed_path}/enriched_listings.csv", index=False)
         reviews.to_csv(f"{processed_path}/reviews_cleaned.csv", index=False)
-    logger.info("Saved cleaned and enriched CSV files.")
+        reviews_sampled.to_csv(f"{processed_path}/reviews_sampled.csv", index=False)
+    logger.info("Saved cleaned, enriched, and sampled CSV files.")
 
     # 5. Data Modeling and DuckDB Load
     logger.info("Step 5: Setting up DuckDB and loading tables...")

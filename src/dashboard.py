@@ -373,10 +373,14 @@ st.markdown(f"""
 @st.cache_resource
 def get_rag_engine(city_key="nyc"):
     from ai_agent import RAGEngine
-    # Prefer city-specific reviews file, fall back to shared NYC file
-    city_path = f"data/processed/reviews_cleaned_{city_key}.csv"
-    shared_path = "data/processed/reviews_cleaned.csv"
-    reviews_path = city_path if os.path.exists(city_path) else shared_path
+    # Order of preference: cleaned city reviews -> sampled city reviews -> cleaned shared -> sampled shared
+    paths = [
+        f"data/processed/reviews_cleaned_{city_key}.csv",
+        f"data/processed/reviews_sampled_{city_key}.csv",
+        "data/processed/reviews_cleaned.csv",
+        "data/processed/reviews_sampled.csv"
+    ]
+    reviews_path = next((p for p in paths if os.path.exists(p)), None)
     return RAGEngine(reviews_path=reviews_path)
 
 @st.cache_resource
